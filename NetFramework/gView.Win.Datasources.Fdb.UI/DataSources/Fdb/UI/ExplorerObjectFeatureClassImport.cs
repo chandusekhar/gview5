@@ -128,7 +128,7 @@ namespace gView.DataSources.Fdb.UI
                     }
                 }
             }
-            //_dataset.RefreshClasses();
+            await _dataset.RefreshClasses();
             await this.Refresh();
         }
 
@@ -195,22 +195,22 @@ namespace gView.DataSources.Fdb.UI
 
         public void Content_DragLeave(EventArgs e, IUserData userdata)
         {
-            
+
         }
 
         public void Content_DragOver(DragEventArgs e, IUserData userdata)
         {
-            
+
         }
 
         public void Content_GiveFeedback(GiveFeedbackEventArgs e, IUserData userdata)
         {
-            
+
         }
 
         public void Content_QueryContinueDrag(QueryContinueDragEventArgs e, IUserData userdata)
         {
-            
+
         }
 
         #endregion
@@ -230,8 +230,6 @@ namespace gView.DataSources.Fdb.UI
             }
             if (datasetObject is IFeatureClass)
             {
-                Thread thread = new Thread(new ParameterizedThreadStart(ImportAsync));
-
                 if (_import == null)
                     _import = new FDBImport();
                 else
@@ -242,15 +240,13 @@ namespace gView.DataSources.Fdb.UI
                 _import.SchemaOnly = schemaOnly;
                 FeatureClassImportProgressReporter reporter = await FeatureClassImportProgressReporter.Create(_import, (IFeatureClass)datasetObject);
 
-                FormProgress progress = new FormProgress(reporter, thread, datasetObject);
+                FormTaskProgress progress = new FormTaskProgress(reporter, ImportAsync(datasetObject));
                 progress.Text = "Import Featureclass: " + ((IFeatureClass)datasetObject).Name;
                 progress.ShowDialog();
                 _import = null;
             }
             if (datasetObject is FeatureClassListViewItem)
             {
-                Thread thread = new Thread(new ParameterizedThreadStart(ImportAsync));
-
                 if (_import == null)
                     _import = new FDBImport();
                 else
@@ -261,27 +257,26 @@ namespace gView.DataSources.Fdb.UI
                 _import.SchemaOnly = schemaOnly;
                 FeatureClassImportProgressReporter reporter = await FeatureClassImportProgressReporter.Create(_import, ((FeatureClassListViewItem)datasetObject).FeatureClass);
 
-                FormProgress progress = new FormProgress(reporter, thread, datasetObject);
+                FormTaskProgress progress = new FormTaskProgress(reporter, ImportAsync(datasetObject));
                 progress.Text = "Import Featureclass: " + ((FeatureClassListViewItem)datasetObject).Text;
                 progress.ShowDialog();
                 _import = null;
             }
         }
 
-        // Thread
-        private void ImportAsync(object element)
+        async private Task ImportAsync(object element)
         {
             if (_fdb == null || _import == null) return;
 
             ISpatialIndexDef sIndexDef = null;
             if (_fdb is AccessFDB)
             {
-                sIndexDef = ((AccessFDB)_fdb).SpatialIndexDef(_dsname).Result;
+                sIndexDef = await ((AccessFDB)_fdb).SpatialIndexDef(_dsname);
             }
 
             if (element is IFeatureClass)
             {
-                if (!_import.ImportToNewFeatureclass(
+                if (!await _import.ImportToNewFeatureclass(
                     _fdb,
                     _dsname,
                     ((IFeatureClass)element).Name,
@@ -289,7 +284,7 @@ namespace gView.DataSources.Fdb.UI
                     null,
                     true,
                     null,
-                    sIndexDef).Result)
+                    sIndexDef))
                 {
                     MessageBox.Show(_import.lastErrorMsg);
                 }
@@ -299,12 +294,12 @@ namespace gView.DataSources.Fdb.UI
                 FeatureClassListViewItem item = element as FeatureClassListViewItem;
                 if (item.FeatureClass == null) return;
 
-                MSSpatialIndex msIndex=new MSSpatialIndex();
+                MSSpatialIndex msIndex = new MSSpatialIndex();
                 msIndex.GeometryType = GeometryFieldType.MsGeometry;
                 msIndex.SpatialIndexBounds = item.FeatureClass.Envelope;
-                msIndex.Level1=msIndex.Level2=msIndex.Level3=msIndex.Level4=MSSpatialIndexLevelSize.LOW;
+                msIndex.Level1 = msIndex.Level2 = msIndex.Level3 = msIndex.Level4 = MSSpatialIndexLevelSize.LOW;
 
-                if (!_import.ImportToNewFeatureclass(
+                if (!await _import.ImportToNewFeatureclass(
                     _fdb,
                     _dsname,
                     item.TargetName,
@@ -312,7 +307,7 @@ namespace gView.DataSources.Fdb.UI
                     item.ImportFieldTranslation,
                     true,
                     null,
-                    sIndexDef).Result)
+                    sIndexDef))
                 {
                     MessageBox.Show(_import.lastErrorMsg);
                 }

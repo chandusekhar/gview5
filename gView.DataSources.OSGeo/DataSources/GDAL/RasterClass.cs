@@ -416,7 +416,7 @@ namespace gView.DataSources.GDAL
                                 break;
                         }
                         band.ReadRaster(x, y, wWidth, wHeight,
-                            new IntPtr(buf.ToInt32() + ch),
+                            new IntPtr(buf.ToInt64() + ch),
                             iWidth, iHeight, OSGeo.GDAL.DataType.GDT_Byte, pixelSpace, stride);
 
                         band.Dispose();
@@ -497,7 +497,7 @@ namespace gView.DataSources.GDAL
                                 break;
                         }
                         band.ReadRaster(x, y, wWidth, wHeight,
-                                new IntPtr(buf.ToInt32() + ch),
+                                new IntPtr(buf.ToInt64() + ch),
                                 iWidth, iHeight, OSGeo.GDAL.DataType.GDT_Byte, pixelSpace, stride);
 
                         band.Dispose();
@@ -782,7 +782,7 @@ namespace gView.DataSources.GDAL
             if (this.SpatialReference != null && sRef != null &&
                 !sRef.Equals(this.SpatialReference))
             {
-                point = GeometricTransformer.Transform2D(point, sRef, this.SpatialReference) as IPoint;
+                point = GeometricTransformerFactory.Transform2D(point, sRef, this.SpatialReference) as IPoint;
             }
             if (point == null)
             {
@@ -839,7 +839,7 @@ namespace gView.DataSources.GDAL
             if (this.SpatialReference != null && sRef != null &&
                 !sRef.Equals(this.SpatialReference))
             {
-                point = GeometricTransformer.Transform2D(point, sRef, this.SpatialReference) as IPoint;
+                point = GeometricTransformerFactory.Transform2D(point, sRef, this.SpatialReference) as IPoint;
             }
             if (point == null)
             {

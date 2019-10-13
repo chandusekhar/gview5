@@ -1,15 +1,16 @@
+using gView.Db.Framework.Db;
+using gView.Framework.Data;
+using gView.Framework.Editor.Core;
+using gView.Framework.FDB;
+using gView.Framework.Geometry;
+using gView.Framework.IO;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using gView.Framework.Data;
-using gView.Framework.IO;
-using gView.Framework.FDB;
-using System.Data.Common;
-using gView.Framework.Geometry;
 using System.Data;
-using gView.Framework.Editor.Core;
-using System.Threading.Tasks;
+using System.Data.Common;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace gView.Framework.OGC.DB
 {
@@ -35,15 +36,21 @@ namespace gView.Framework.OGC.DB
                     if (fcEnv != null)
                     {
                         if (env == null)
+                        {
                             env = new Envelope(fcEnv);
+                        }
                         else
+                        {
                             env.Union(fcEnv);
+                        }
                     }
                 }
             }
 
             if (env != null)
+            {
                 return env;
+            }
 
             return new Envelope();
         }
@@ -53,6 +60,8 @@ namespace gView.Framework.OGC.DB
             return Task.FromResult<ISpatialReference>(null);
         }
         public void SetSpatialReference(ISpatialReference sRef) { }
+
+        virtual protected bool DbImplementsTransactions => true;
 
         #endregion
 
@@ -65,7 +74,7 @@ namespace gView.Framework.OGC.DB
                 return _connectionString;
             }
         }
-        public Task<bool> SetConnectionString(string value)
+        virtual public Task<bool> SetConnectionString(string value)
         {
             string provider = String.Empty;
             if (value.ToLower().IndexOf("sql:") == 0 ||
@@ -101,11 +110,13 @@ namespace gView.Framework.OGC.DB
             }
 
             if (ConnectionStringChanged != null)
+            {
                 ConnectionStringChanged(this, provider);
+            }
 
             return Task.FromResult(true);
         }
-        
+
 
         virtual public string DatasetGroupName
         {
@@ -281,16 +292,25 @@ namespace gView.Framework.OGC.DB
 
         async public Task AppendElement(string elementName)
         {
-            if (_layers == null) _layers = new List<IDatasetElement>();
+            if (_layers == null)
+            {
+                _layers = new List<IDatasetElement>();
+            }
 
             foreach (IDatasetElement e in _layers)
             {
-                if (e.Title == elementName) return;
+                if (e.Title == elementName)
+                {
+                    return;
+                }
             }
 
             //IDatasetElement element = _fdb.DatasetElement(this, elementName);
             IDatasetElement element = await Element(elementName);
-            if (element != null) _layers.Add(element);
+            if (element != null)
+            {
+                _layers.Add(element);
+            }
         }
 
         #endregion
@@ -299,7 +319,11 @@ namespace gView.Framework.OGC.DB
 
         async public Task<bool> LoadAsync(IPersistStream stream)
         {
-            if (_layers != null) _layers.Clear();
+            if (_layers != null)
+            {
+                _layers.Clear();
+            }
+
             await this.SetConnectionString((string)stream.Load("connectionstring", ""));
             return await this.Open();
         }
@@ -338,7 +362,9 @@ namespace gView.Framework.OGC.DB
             foreach (System.Attribute attribute in System.Attribute.GetCustomAttributes(this.GetType()))
             {
                 if (attribute is UseDatasetNameCase)
+                {
                     nameCase = ((UseDatasetNameCase)attribute).Value;
+                }
             }
             switch (nameCase)
             {
@@ -370,7 +396,10 @@ namespace gView.Framework.OGC.DB
             foreach (IField field in Fields.ToEnumerable())
             {
                 if (field.type == FieldType.ID ||
-                    field.type == FieldType.Shape) continue;
+                    field.type == FieldType.Shape)
+                {
+                    continue;
+                }
 
                 string fieldName = field.name;
                 switch (nameCase)
@@ -424,14 +453,21 @@ namespace gView.Framework.OGC.DB
 
                     command.CommandText = CreateGidSequence(fcname);
                     if (!String.IsNullOrEmpty(command.CommandText))
+                    {
                         await command.ExecuteNonQueryAsync();
+                    }
+
                     command.CommandText = CreateGidTrigger(fcname, OgcDictionary("gid"));
                     if (!String.IsNullOrEmpty(command.CommandText))
+                    {
                         await command.ExecuteNonQueryAsync();
+                    }
 
                     command.CommandText = AddGeometryColumn("", fcname, OgcDictionary("the_geom"), "-1", geomTypeString);
                     if (!String.IsNullOrEmpty(command.CommandText))
+                    {
                         await command.ExecuteNonQueryAsync();
+                    }
                 }
                 return 0;
             }
@@ -454,10 +490,14 @@ namespace gView.Framework.OGC.DB
 
         Task<IFeatureDataset> IFeatureDatabase.GetDataset(string name)
         {
-                if (this.DatasetName == name)
-                    return Task.FromResult<IFeatureDataset>(this);
-                else
-                    return Task.FromResult<IFeatureDataset>(null);
+            if (this.DatasetName == name)
+            {
+                return Task.FromResult<IFeatureDataset>(this);
+            }
+            else
+            {
+                return Task.FromResult<IFeatureDataset>(null);
+            }
         }
 
         async virtual public Task<bool> DeleteFeatureClass(string name)
@@ -473,7 +513,8 @@ namespace gView.Framework.OGC.DB
                     //NpgsqlCommand command = new NpgsqlCommand("SELECT DropGeometryTable ('','" + name + "')", connection);
                     DbCommand command = this.ProviderFactory.CreateCommand();
                     command.Connection = connection;
-                    foreach (var commandText in DropGeometryTable("", name).Split(';'))
+
+                    foreach (var commandText in DropGeometryTable(GetTableDbSchemaName(name), GetTableDbName(name)).Split(';'))
                     {
                         command.CommandText = commandText;
                         await command.ExecuteNonQueryAsync();
@@ -509,7 +550,11 @@ namespace gView.Framework.OGC.DB
 
         async public Task<IFeatureCursor> Query(IFeatureClass fc, IQueryFilter filter)
         {
-            if (fc == null) return null;
+            if (fc == null)
+            {
+                return null;
+            }
+
             return await fc.GetFeatures(filter);
         }
 
@@ -531,13 +576,20 @@ namespace gView.Framework.OGC.DB
             foreach (System.Attribute attribute in System.Attribute.GetCustomAttributes(this.GetType()))
             {
                 if (attribute is UseDatasetNameCase)
+                {
                     nameCase = ((UseDatasetNameCase)attribute).Value;
+                }
             }
 
-            if (fClass == null) return false;
+            if (fClass == null)
+            {
+                return false;
+            }
 
             if (!CanEditFeatureClass(fClass, EditCommands.Insert))
+            {
                 return false;
+            }
 
             try
             {
@@ -556,122 +608,152 @@ namespace gView.Framework.OGC.DB
                     connection.ConnectionString = _connectionString;
                     await connection.OpenAsync();
 
-                    DbCommand command = this.ProviderFactory.CreateCommand();
-                    command.Connection = connection;
-                    foreach (IFeature feature in features)
+                    using (var transaction = this.DbImplementsTransactions ? connection.BeginTransaction() : new FakeTransaction(connection))
                     {
-                        StringBuilder fields = new StringBuilder(), parameters = new StringBuilder();
-                        command.Parameters.Clear();
-                        if (feature.Shape != null)
+
+                        DbCommand command = this.ProviderFactory.CreateCommand();
+                        command.Connection = connection;
+
+                        if (this.DbImplementsTransactions)
                         {
-                            var shape = ValidateGeometry(fClass, feature.Shape);
+                            command.Transaction = transaction;
+                        }
 
-                            bool asParameter;
-                            object shapeObject = this.ShapeParameterValue((OgcSpatialFeatureclass)fClass, shape,
-                                shape.Srs != null && shape.Srs > 0 ? (int)shape.Srs : srid,
-                                out asParameter);
+                        StringBuilder commandText = new StringBuilder();
 
-                            if (asParameter == true)
+                        foreach (IFeature feature in features)
+                        {
+                            StringBuilder fields = new StringBuilder(), parameters = new StringBuilder();
+                            command.Parameters.Clear();
+                            if (feature.Shape != null)
                             {
-                                DbParameter parameter = this.ProviderFactory.CreateParameter();
-                                parameter.ParameterName = this.DbParameterName(fClass.ShapeFieldName);
-                                parameter.Value = shapeObject != null ? shapeObject : DBNull.Value;
-                                fields.Append(this.DbColumnName(fClass.ShapeFieldName));
+                                var shape = ValidateGeometry(fClass, feature.Shape);
 
-                                string paramExpresssion = InsertShapeParameterExpression((OgcSpatialFeatureclass)fClass, shape);
-                                if (!String.IsNullOrWhiteSpace(paramExpresssion))
-                                    paramExpresssion = String.Format(paramExpresssion, this.DbParameterName(fClass.ShapeFieldName));
+                                bool asParameter;
+                                object shapeObject = this.ShapeParameterValue((OgcSpatialFeatureclass)fClass, shape,
+                                    shape.Srs != null && shape.Srs > 0 ? (int)shape.Srs : srid,
+                                    out asParameter);
+
+                                if (asParameter == true)
+                                {
+                                    DbParameter parameter = this.ProviderFactory.CreateParameter();
+                                    parameter.ParameterName = this.DbParameterName(fClass.ShapeFieldName);
+                                    parameter.Value = shapeObject != null ? shapeObject : DBNull.Value;
+                                    fields.Append(this.DbColumnName(fClass.ShapeFieldName));
+
+                                    string paramExpresssion = InsertShapeParameterExpression((OgcSpatialFeatureclass)fClass, shape);
+                                    if (!String.IsNullOrWhiteSpace(paramExpresssion))
+                                    {
+                                        paramExpresssion = String.Format(paramExpresssion, this.DbParameterName(fClass.ShapeFieldName));
+                                    }
+                                    else
+                                    {
+                                        paramExpresssion = this.DbParameterName(fClass.ShapeFieldName);
+                                    }
+
+                                    parameters.Append(paramExpresssion);
+                                    command.Parameters.Add(parameter);
+                                }
                                 else
-                                    paramExpresssion = this.DbParameterName(fClass.ShapeFieldName);
-                                parameters.Append(paramExpresssion);
+                                {
+                                    fields.Append(this.DbColumnName(fClass.ShapeFieldName));
+                                    parameters.Append(shapeObject.ToString());
+                                }
+                            }
+
+                            #region Unmanaged Ids (eg SDE)
+
+                            if (!HasManagedRowIds(fClass))
+                            {
+                                var rowId = await GetNextInsertRowId(fClass);
+                                if (rowId.HasValue)
+                                {
+                                    var idFieleValue = feature.Fields.Where(f => f.Name.Equals(fClass.IDFieldName, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+                                    if (idFieleValue == null)
+                                    {
+                                        idFieleValue = new FieldValue(fClass.IDFieldName);
+                                        feature.Fields.Add(idFieleValue);
+                                    }
+                                    idFieleValue.Value = rowId;
+                                }
+                            }
+
+                            #endregion
+
+                            foreach (IFieldValue fv in feature.Fields)
+                            {
+                                string fvName = fv.Name;
+                                switch (nameCase)
+                                {
+                                    case DatasetNameCase.lower:
+                                    case DatasetNameCase.classNameLower:
+                                        fvName = fvName.ToLower();
+                                        break;
+                                    case DatasetNameCase.upper:
+                                    case DatasetNameCase.classNameUpper:
+                                        fvName = fvName.ToUpper();
+                                        break;
+                                }
+
+                                if (fvName == fClass.IDFieldName && HasManagedRowIds(fClass))
+                                {
+                                    continue;
+                                }
+                                if (fvName == fClass.ShapeFieldName)
+                                {
+                                    continue;
+                                }
+
+                                IField field = fClass.FindField(fvName);
+                                if (field == null)
+                                {
+                                    continue;
+                                }
+
+                                if (fields.Length != 0)
+                                {
+                                    fields.Append(",");
+                                }
+
+                                if (parameters.Length != 0)
+                                {
+                                    parameters.Append(",");
+                                }
+
+                                object val = fv.Value;
+
+                                DbParameter parameter = this.ProviderFactory.CreateParameter();
+                                parameter.ParameterName = DbParameterName(fvName);
+                                try
+                                {
+                                    parameter.Value = val;
+                                }
+                                catch
+                                {
+                                    if (val != null)
+                                    {
+                                        parameter.Value = val.ToString();
+                                    }
+                                }
+                                //NpgsqlParameter parameter = new NpgsqlParameter("@" + fv.Name, val);
+
+                                fields.Append(this.DbColumnName(fvName));
+                                parameters.Append(DbParameterName(fvName));
                                 command.Parameters.Add(parameter);
                             }
-                            else
-                            {
-                                fields.Append(this.DbColumnName(fClass.ShapeFieldName));
-                                parameters.Append(shapeObject.ToString());
-                            }
+
+                            command.CommandText = "INSERT INTO " + fClass.Name + " (" + fields.ToString() + ") VALUES (" + parameters + ")";
+                            await command.ExecuteNonQueryAsync();
                         }
 
-                        #region Unmanaged Ids (eg SDE)
-
-                        if (!HasManagedRowIds(fClass))
-                        {
-                            var rowId = await GetNextInsertRowId(fClass);
-                            if (rowId.HasValue)
-                            {
-                                var idFieleValue = feature.Fields.Where(f => f.Name.Equals(fClass.IDFieldName, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
-                                if (idFieleValue == null)
-                                {
-                                    idFieleValue = new FieldValue(fClass.IDFieldName);
-                                    feature.Fields.Add(idFieleValue);
-                                }
-                                idFieleValue.Value = rowId; 
-                            }
-                        }
-
-                        #endregion
-
-                        foreach (IFieldValue fv in feature.Fields)
-                        {
-                            string fvName = fv.Name;
-                            switch (nameCase)
-                            {
-                                case DatasetNameCase.lower:
-                                case DatasetNameCase.classNameLower:
-                                    fvName = fvName.ToLower();
-                                    break;
-                                case DatasetNameCase.upper:
-                                case DatasetNameCase.classNameUpper:
-                                    fvName = fvName.ToUpper();
-                                    break;
-                            }
-
-                            if (fvName == fClass.IDFieldName && HasManagedRowIds(fClass))
-                            {
-                                continue;
-                            }
-                            if (fvName == fClass.ShapeFieldName)
-                            {
-                                continue;
-                            }
-
-                            IField field = fClass.FindField(fvName);
-                            if (field == null) continue;
-
-                            if (fields.Length != 0) fields.Append(",");
-                            if (parameters.Length != 0) parameters.Append(",");
-
-                            object val = fv.Value;
-
-                            DbParameter parameter = this.ProviderFactory.CreateParameter();
-                            parameter.ParameterName = DbParameterName(fvName);
-                            try
-                            {
-                                parameter.Value = val;
-                            }
-                            catch
-                            {
-                                if (val != null)
-                                    parameter.Value = val.ToString();
-                            }
-                            //NpgsqlParameter parameter = new NpgsqlParameter("@" + fv.Name, val);
-
-                            fields.Append(this.DbColumnName(fvName));
-                            parameters.Append(DbParameterName(fvName));
-                            command.Parameters.Add(parameter);
-                        }
-
-                        command.CommandText = "INSERT INTO " + fClass.Name + " (" + fields.ToString() + ") VALUES (" + parameters + ")";
                         try
                         {
-                            command.CommandTimeout = 600;
-                            await command.ExecuteNonQueryAsync();
+                            transaction.Commit();
                         }
                         catch (Exception ex)
                         {
-                            _errMsg = ex.Message;
-                            return false;
+                            transaction.Rollback();
+                            throw ex;
                         }
                     }
                 }
@@ -687,7 +769,11 @@ namespace gView.Framework.OGC.DB
 
         async public Task<bool> Update(IFeatureClass fClass, IFeature feature)
         {
-            if (feature == null || fClass == null) return false;
+            if (feature == null || fClass == null)
+            {
+                return false;
+            }
+
             List<IFeature> features = new List<IFeature>();
             features.Add(feature);
 
@@ -696,10 +782,15 @@ namespace gView.Framework.OGC.DB
 
         async public Task<bool> Update(IFeatureClass fClass, List<IFeature> features)
         {
-            if (fClass == null) return false;
+            if (fClass == null)
+            {
+                return false;
+            }
 
             if (!CanEditFeatureClass(fClass, EditCommands.Update))
+            {
                 return false;
+            }
 
             try
             {
@@ -731,7 +822,7 @@ namespace gView.Framework.OGC.DB
 
                             bool asParameter;
                             object shapeObject = this.ShapeParameterValue((OgcSpatialFeatureclass)fClass, shape,
-                                shape.Srs != null && shape.Srs > 0 ? (int)shape.Srs : srid, 
+                                shape.Srs != null && shape.Srs > 0 ? (int)shape.Srs : srid,
                                 out asParameter);
                             if (asParameter == true)
                             {
@@ -749,17 +840,26 @@ namespace gView.Framework.OGC.DB
 
                         foreach (IFieldValue fv in feature.Fields)
                         {
-                            if (fv.Name == fClass.IDFieldName || fv.Name == fClass.ShapeFieldName) continue;
+                            if (fv.Name == fClass.IDFieldName || fv.Name == fClass.ShapeFieldName)
+                            {
+                                continue;
+                            }
 
                             IField field = fClass.FindField(fv.Name);
-                            if (field == null) continue;
+                            if (field == null)
+                            {
+                                continue;
+                            }
 
-                            if (fields.Length != 0) fields.Append(",");
+                            if (fields.Length != 0)
+                            {
+                                fields.Append(",");
+                            }
 
                             object val = fv.Value;
 
                             DbParameter parameter = this.ProviderFactory.CreateParameter();
-                            parameter.ParameterName = DbParameterName( fv.Name);
+                            parameter.ParameterName = DbParameterName(fv.Name);
                             parameter.Value = val;
                             //NpgsqlParameter parameter = new NpgsqlParameter("@" + fv.Name, val);
                             fields.Append(DbColumnName(fv.Name) + "=" + DbParameterName(fv.Name));
@@ -782,16 +882,25 @@ namespace gView.Framework.OGC.DB
 
         async public Task<bool> Delete(IFeatureClass fClass, int oid)
         {
-            if (fClass == null) return false;
+            if (fClass == null)
+            {
+                return false;
+            }
+
             return await Delete(fClass, fClass.IDFieldName + "=" + oid.ToString());
         }
 
         async public Task<bool> Delete(IFeatureClass fClass, string where)
         {
-            if (fClass == null) return false;
+            if (fClass == null)
+            {
+                return false;
+            }
 
             if (!CanEditFeatureClass(fClass, EditCommands.Delete))
+            {
                 return false;
+            }
 
             try
             {
@@ -840,6 +949,16 @@ namespace gView.Framework.OGC.DB
         virtual public string DbSchema
         {
             get { return String.Empty; }
+        }
+
+        virtual protected string GetTableDbSchemaName(string tableName)
+        {
+            return String.Empty;
+        }
+
+        virtual protected string GetTableDbName(string fullTableName)
+        {
+            return fullTableName;
         }
 
         virtual public string OgcDictionary(string ogcExpression)
@@ -919,7 +1038,10 @@ namespace gView.Framework.OGC.DB
 
         virtual public Task<IEnvelope> FeatureClassEnvelope(IFeatureClass fc)
         {
-            if (fc == null) return null;
+            if (fc == null)
+            {
+                return null;
+            }
 
             IEnvelope envelope = null;
             DataTable tab = new DataTable();
@@ -930,7 +1052,7 @@ namespace gView.Framework.OGC.DB
                 using (DbDataAdapter adapter = this.ProviderFactory.CreateDataAdapter()) //new NpgsqlDataAdapter("select extent(" + this.ShapeFieldName + ") from " + this.Name, conn))
                 {
                     adapter.SelectCommand = this.ProviderFactory.CreateCommand();
-                    adapter.SelectCommand.CommandText = "select st_extent(" + fc.ShapeFieldName + ") from " + DbTableName(fc.Name);
+                    adapter.SelectCommand.CommandText = "select ST_AsBinary(st_extent(" + fc.ShapeFieldName + ")) as extent from " + DbTableName(fc.Name);
                     adapter.SelectCommand.Connection = conn;
 
                     adapter.Fill(tab);
@@ -939,17 +1061,19 @@ namespace gView.Framework.OGC.DB
                 {
                     try
                     {
-                        string box = tab.Rows[0][0].ToString();
-                        box = box.ToLower().Replace("box(", "").Replace(")", "");
-                        string[] xy = box.Split(',');
+                        var wkt = (byte[])tab.Rows[0][0];
+                        envelope = gView.Framework.OGC.OGC.WKBToGeometry(wkt)?.Envelope;
+                        //string box = tab.Rows[0][0].ToString();
+                        //box = box.ToLower().Replace("box(", "").Replace(")", "");
+                        //string[] xy = box.Split(',');
 
-                        string[] c1 = xy[0].Split(' ');
-                        string[] c2 = xy[1].Split(' ');
-                        envelope = new Envelope(
-                             gView.Framework.OGC.OGC.ToDouble(c1[0]),
-                             gView.Framework.OGC.OGC.ToDouble(c1[1]),
-                             gView.Framework.OGC.OGC.ToDouble(c2[0]),
-                             gView.Framework.OGC.OGC.ToDouble(c2[1]));
+                        //string[] c1 = xy[0].Split(' ');
+                        //string[] c2 = xy[1].Split(' ');
+                        //envelope = new Envelope(
+                        //     gView.Framework.OGC.OGC.ToDouble(c1[0]),
+                        //     gView.Framework.OGC.OGC.ToDouble(c1[1]),
+                        //     gView.Framework.OGC.OGC.ToDouble(c2[0]),
+                        //     gView.Framework.OGC.OGC.ToDouble(c2[1]));
                     }
                     catch { }
                 }
@@ -1022,13 +1146,21 @@ namespace gView.Framework.OGC.DB
 
             string filterWhereClause = (filter is IRowIDFilter) ? ((IRowIDFilter)filter).RowIDWhereClause : filter.WhereClause;
 
-            if (where != "" && filterWhereClause != "") where += " AND ";
+            if (where != "" && filterWhereClause != "")
+            {
+                where += " AND ";
+            }
+
             where += filterWhereClause;
 
             StringBuilder fieldNames = new StringBuilder();
             foreach (string fieldName in filter.SubFields.Split(' '))
             {
-                if (fieldNames.Length > 0) fieldNames.Append(",");
+                if (fieldNames.Length > 0)
+                {
+                    fieldNames.Append(",");
+                }
+
                 if (fieldName == "\"" + fc.ShapeFieldName + "\"")
                 {
                     fieldNames.Append("ST_AsBinary(\"" + fc.ShapeFieldName + "\") as temp_geometry");
@@ -1040,15 +1172,22 @@ namespace gView.Framework.OGC.DB
                 }
             }
 
-            string limit = String.Empty, orderBy=String.Empty;
+            string limit = String.Empty, orderBy = String.Empty;
 
             if (!String.IsNullOrWhiteSpace(filter.OrderBy))
+            {
                 orderBy = "order by " + filter.OrderBy;
+            }
 
             if (filter.Limit > 0)
+            {
                 limit = " limit " + filter.Limit;
+            }
+
             if (filter.BeginRecord > 1)  // Default in QueryFilter is one!!!
+            {
                 limit += " offset " + Math.Max(0, filter.BeginRecord - 1);
+            }
 
             DbCommand command = ((OgcSpatialDataset)fc.Dataset).ProviderFactory.CreateCommand();
             command.CommandText = ("SELECT " + fieldNames + " FROM " + DbTableName(fc.Name) + ((where != "") ? " WHERE " + where : "") + limit).Trim();
@@ -1068,7 +1207,7 @@ namespace gView.Framework.OGC.DB
             return tableName;
         }
 
-        public enum EditCommands { Insert=0, Update=1, Delete=2 }
+        public enum EditCommands { Insert = 0, Update = 1, Delete = 2 }
         virtual public bool CanEditFeatureClass(IFeatureClass fc, EditCommands command)
         {
             return true;

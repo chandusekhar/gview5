@@ -14,11 +14,12 @@ using System.Windows.Forms;
 using gView.Framework.Editor.Core;
 using gView.Plugins.Editor.Dialogs;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace gView.Plugins.Editor
 {
-    [gView.Framework.system.RegisterPlugIn(Globals.ModuleGuidString)]
-    class Module : IMapApplicationModule, IModule, IPersistable
+    [gView.Framework.system.RegisterPlugIn(Globals.ModuleGuidString, PluginUsage.Desktop)]
+    public class Module : IMapApplicationModule, IModule, IPersistable
     {
         public enum EditTask { None=0, CreateNewFeature = 1, ModifyFeature = 2 }
         
@@ -130,7 +131,7 @@ namespace gView.Plugins.Editor
             return true;
         }
 
-        public bool PerformInsertFeature(IFeatureClass fc, IFeature feature)
+        async public Task<bool> PerformInsertFeature(IFeatureClass fc, IFeature feature)
         {
             if (fc == null || feature == null ||
                 fc.Dataset == null ||
@@ -158,12 +159,12 @@ namespace gView.Plugins.Editor
                 _doc.FocusMap.Display.SpatialReference != null &&
                 !_doc.FocusMap.Display.SpatialReference.Equals(_fc.SpatialReference))
             {
-                feature.Shape = GeometricTransformer.Transform2D(
+                feature.Shape = GeometricTransformerFactory.Transform2D(
                     feature.Shape,
                     _doc.FocusMap.Display.SpatialReference,
                     _fc.SpatialReference);
             }
-            bool ret = ((IFeatureUpdater)fc.Dataset.Database).Insert(fc, feature).Result;
+            bool ret = await ((IFeatureUpdater)fc.Dataset.Database).Insert(fc, feature);
             feature.Shape = shape;
 
             if (!ret)
@@ -171,7 +172,7 @@ namespace gView.Plugins.Editor
             return ret;
         }
 
-        public bool PerformUpdateFeature(IFeatureClass fc, IFeature feature)
+        async public Task<bool> PerformUpdateFeature(IFeatureClass fc, IFeature feature)
         {
             if (fc == null || feature == null ||
                 fc.Dataset == null ||
@@ -199,12 +200,12 @@ namespace gView.Plugins.Editor
                 _doc.FocusMap.Display.SpatialReference != null &&
                 !_doc.FocusMap.Display.SpatialReference.Equals(_fc.SpatialReference))
             {
-                feature.Shape = GeometricTransformer.Transform2D(
+                feature.Shape = GeometricTransformerFactory.Transform2D(
                     feature.Shape,
                     _doc.FocusMap.Display.SpatialReference,
                     _fc.SpatialReference);
             }
-            bool ret = ((IFeatureUpdater)fc.Dataset.Database).Update(fc, feature).Result;
+            bool ret = await ((IFeatureUpdater)fc.Dataset.Database).Update(fc, feature);
             feature.Shape = shape;
 
             if (!ret)
@@ -212,7 +213,7 @@ namespace gView.Plugins.Editor
             return ret;
         }
 
-        public bool PerformDeleteFeature(IFeatureClass fc, IFeature feature)
+        async public Task<bool> PerformDeleteFeature(IFeatureClass fc, IFeature feature)
         {
             if (fc == null || feature == null ||
                 fc.Dataset == null ||
@@ -227,7 +228,7 @@ namespace gView.Plugins.Editor
                 return false;
             }
 
-            bool ret = ((IFeatureUpdater)fc.Dataset.Database).Delete(fc, feature.OID).Result;
+            bool ret = await ((IFeatureUpdater)fc.Dataset.Database).Delete(fc, feature.OID);
             if (!ret)
                 _lastMsg = fc.Dataset.Database.LastErrorMessage;
             return ret;

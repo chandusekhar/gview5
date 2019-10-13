@@ -36,6 +36,8 @@ namespace gView.Framework.system.UI
             this.lblBit = new System.Windows.Forms.Label();
             this.lblDemo = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.lblBuildNumber = new System.Windows.Forms.Label();
+            this.lblVersionNumber = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.lblProductName = new System.Windows.Forms.Label();
             this.lblParseAssembly = new System.Windows.Forms.Label();
@@ -71,7 +73,6 @@ namespace gView.Framework.system.UI
             this.lblVersion.Size = new System.Drawing.Size(60, 17);
             this.lblVersion.TabIndex = 3;
             this.lblVersion.Text = "Version:";
-            this.lblVersion.Visible = false;
             // 
             // lblBuild
             // 
@@ -91,7 +92,7 @@ namespace gView.Framework.system.UI
             this.lblBit.BackColor = System.Drawing.Color.Transparent;
             this.lblBit.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblBit.ForeColor = System.Drawing.Color.White;
-            this.lblBit.Location = new System.Drawing.Point(182, 13);
+            this.lblBit.Location = new System.Drawing.Point(195, 13);
             this.lblBit.Name = "lblBit";
             this.lblBit.Size = new System.Drawing.Size(44, 17);
             this.lblBit.TabIndex = 7;
@@ -113,6 +114,8 @@ namespace gView.Framework.system.UI
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.Blue;
+            this.panel1.Controls.Add(this.lblBuildNumber);
+            this.panel1.Controls.Add(this.lblVersionNumber);
             this.panel1.Controls.Add(this.lblVersion);
             this.panel1.Controls.Add(this.lblBit);
             this.panel1.Controls.Add(this.label1);
@@ -122,6 +125,30 @@ namespace gView.Framework.system.UI
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(841, 64);
             this.panel1.TabIndex = 8;
+            // 
+            // lblBuildNumber
+            // 
+            this.lblBuildNumber.AutoSize = true;
+            this.lblBuildNumber.BackColor = System.Drawing.Color.Transparent;
+            this.lblBuildNumber.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblBuildNumber.ForeColor = System.Drawing.Color.White;
+            this.lblBuildNumber.Location = new System.Drawing.Point(164, 13);
+            this.lblBuildNumber.Name = "lblBuildNumber";
+            this.lblBuildNumber.Size = new System.Drawing.Size(20, 17);
+            this.lblBuildNumber.TabIndex = 9;
+            this.lblBuildNumber.Text = "...";
+            // 
+            // lblVersionNumber
+            // 
+            this.lblVersionNumber.AutoSize = true;
+            this.lblVersionNumber.BackColor = System.Drawing.Color.Transparent;
+            this.lblVersionNumber.Font = new System.Drawing.Font("Microsoft Sans Serif", 7F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblVersionNumber.ForeColor = System.Drawing.Color.White;
+            this.lblVersionNumber.Location = new System.Drawing.Point(78, 13);
+            this.lblVersionNumber.Name = "lblVersionNumber";
+            this.lblVersionNumber.Size = new System.Drawing.Size(20, 17);
+            this.lblVersionNumber.TabIndex = 8;
+            this.lblVersionNumber.Text = "...";
             // 
             // pictureBox1
             // 
@@ -204,6 +231,8 @@ namespace gView.Framework.system.UI
         private System.Windows.Forms.Label lblProductName;
         private System.Windows.Forms.Label lblParseAssembly;
         private System.Windows.Forms.Label lblAddPluginType;
+        private System.Windows.Forms.Label lblBuildNumber;
+        private System.Windows.Forms.Label lblVersionNumber;
     }
 }
 

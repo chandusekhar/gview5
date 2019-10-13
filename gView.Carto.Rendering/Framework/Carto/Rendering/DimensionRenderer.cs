@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace gView.Framework.Carto.Rendering
 {
-    [RegisterPlugIn("C1880775-C5B7-40DD-80B3-6B54A1F41655")]
+    [RegisterPlugInAttribute("C1880775-C5B7-40DD-80B3-6B54A1F41655")]
     public class DimensionRenderer : Cloner, IFeatureRenderer, IPropertyPage, ILegendGroup
     {
         public enum lineCapType { Arrow = 0, ArrowLine = 1, Line = 2, Circle = 3 }
@@ -293,7 +293,7 @@ namespace gView.Framework.Carto.Rendering
                 if (((IFeatureLayer)initObject).FeatureClass == null) return null;
 
                 string appPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-                Assembly uiAssembly = Assembly.LoadFrom(appPath + @"\gView.Win.Carto.Rendering.UI.dll");
+                Assembly uiAssembly = Assembly.LoadFrom(appPath + @"/gView.Win.Carto.Rendering.UI.dll");
 
                 IPropertyPanel p = uiAssembly.CreateInstance("gView.Framework.Carto.Rendering.UI.PropertyForm_DimensionRenderer") as IPropertyPanel;
                 if (p != null)

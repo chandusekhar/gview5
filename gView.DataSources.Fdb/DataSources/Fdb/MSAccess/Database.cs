@@ -200,7 +200,7 @@ namespace gView.DataSources.Fdb.MSAccess
         #region IFDB
         virtual public bool Create(string name)
         {
-            FileInfo tpl = new FileInfo(gView.Framework.system.SystemVariables.StartupDirectory + @"\sql\accessFDB\fdb_1_2_0.tpl");
+            FileInfo tpl = new FileInfo(gView.Framework.system.SystemVariables.StartupDirectory + @"/sql/accessFDB/fdb_1_2_0.tpl");
             if (!tpl.Exists)
             {
                 _errMsg = "Can't find template file: " + tpl.FullName;
@@ -3319,7 +3319,7 @@ namespace gView.DataSources.Fdb.MSAccess
                 return false;
             }
 
-            GeometricTransformer transformer = new GeometricTransformer();
+            IGeometricTransformer transformer = GeometricTransformerFactory.Create();
             //transformer.FromSpatialReference = fc.SpatialReference;
             //transformer.ToSpatialReference = destSRef;
             transformer.SetSpatialReferences(fc.SpatialReference, destSRef);

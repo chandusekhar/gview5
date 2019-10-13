@@ -1,12 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Windows.Forms;
 using gView.Framework.Data;
 using gView.Framework.FDB;
-using gView.Framework.system;
 using gView.Framework.Geometry;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace gView.Framework.system.UI
 {
@@ -23,7 +21,7 @@ namespace gView.Framework.system.UI
         private IGeometricTransformer _transformer = null;
         private bool _schemaOnly = false;
 
-        public FeatureImport(int featureBufferSize=50)
+        public FeatureImport(int featureBufferSize = 50)
         {
             _cancelTracker = new CancelTracker();
             ((CancelTracker)_cancelTracker).Reset();
@@ -61,20 +59,27 @@ namespace gView.Framework.system.UI
         async public Task<bool> ImportToNewFeatureclass(IFeatureDataset destDS, string fcname, IFeatureClass sourceFC, FieldTranslation fieldTranslation, bool project, List<IQueryFilter> filters, geometryType? sourceGeometryType = null)
         {
             if (destDS == null)
+            {
                 return false;
+            }
 
             DatasetNameCase nameCase = DatasetNameCase.ignore;
             foreach (System.Attribute attribute in System.Attribute.GetCustomAttributes(destDS.GetType()))
             {
                 if (attribute is UseDatasetNameCase)
+                {
                     nameCase = ((UseDatasetNameCase)attribute).Value;
+                }
             }
             return await ImportToNewFeatureclass(destDS, fcname, sourceFC, fieldTranslation, project, filters, nameCase, sourceGeometryType);
         }
 
-        async private Task<bool> ImportToNewFeatureclass(IFeatureDataset destDS, string fcname, IFeatureClass sourceFC, FieldTranslation fieldTranslation, bool project, List<IQueryFilter> filters, DatasetNameCase namecase, geometryType? sourceGeometryType=null)
+        async private Task<bool> ImportToNewFeatureclass(IFeatureDataset destDS, string fcname, IFeatureClass sourceFC, FieldTranslation fieldTranslation, bool project, List<IQueryFilter> filters, DatasetNameCase namecase, geometryType? sourceGeometryType = null)
         {
-            if (!_cancelTracker.Continue) return true;
+            if (!_cancelTracker.Continue)
+            {
+                return true;
+            }
 
             switch (namecase)
             {
@@ -137,11 +142,15 @@ namespace gView.Framework.system.UI
                 }
 
                 if (destLayer != null)
+                {
                     await fdb.DeleteFeatureClass(fcname);
+                }
 
                 GeometryDef geomDef = new GeometryDef(sourceFC);
                 if (geomDef.GeometryType == geometryType.Unknown && sourceGeometryType != null)
+                {
                     geomDef.GeometryType = sourceGeometryType.Value;
+                }
 
                 int fcID = await fdb.CreateFeatureClass(destDS.DatasetName,
                                                   fcname,
@@ -168,10 +177,16 @@ namespace gView.Framework.system.UI
 
                 if (project && destFC.SpatialReference != null && !destFC.SpatialReference.Equals(sourceFC.SpatialReference))
                 {
-                    _transformer = new GeometricTransformer();
+                    _transformer = GeometricTransformerFactory.Create();
                     //_transformer.FromSpatialReference = sourceFC.SpatialReference;
                     //_transformer.ToSpatialReference = destFC.SpatialReference;
                     _transformer.SetSpatialReferences(sourceFC.SpatialReference, destFC.SpatialReference);
+                }
+
+                var importBufferSizeAttribute = destFC.GetType().GetCustomAttribute<ImportFeaturesBufferSizeAttribute>();
+                if (importBufferSizeAttribute != null && importBufferSizeAttribute.BufferSize > 0)
+                {
+                    this.FeatureBufferSize = importBufferSizeAttribute.BufferSize;
                 }
 
                 if (_cancelTracker.Continue)
@@ -179,7 +194,9 @@ namespace gView.Framework.system.UI
                     bool result = true;
 
                     if (fdb is IFeatureImportEvents)
+                    {
                         ((IFeatureImportEvents)fdb).BeforeInsertFeaturesEvent(sourceFC, destFC);
+                    }
 
                     if (!_schemaOnly)
                     {
@@ -193,7 +210,9 @@ namespace gView.Framework.system.UI
                     }
 
                     if (fdb is IFeatureImportEvents)
+                    {
                         ((IFeatureImportEvents)fdb).AfterInsertFeaturesEvent(sourceFC, destFC);
+                    }
                 }
 
                 if (fdb is IFileFeatureDatabase)
@@ -247,13 +266,23 @@ namespace gView.Framework.system.UI
                     IFeature feature;
                     while ((feature = await cursor.NextFeature()) != null)
                     {
-                        if (fTrans != null) fTrans.RenameFields(feature);
+                        if (fTrans != null)
+                        {
+                            fTrans.RenameFields(feature);
+                        }
+
                         if (_transformer != null)
                         {
                             feature.Shape = _transformer.Transform2D(feature.Shape) as IGeometry;
                         }
                         features.Add(feature);
                         counter++;
+
+                        if (!_cancelTracker.Continue)
+                        {
+                            break;
+                        }
+
                         if ((counter % this.FeatureBufferSize) == 0)
                         {
                             if (!await fdb.Insert(dest, features))
@@ -262,12 +291,15 @@ namespace gView.Framework.system.UI
                                 return false;
                             }
                             features.Clear();
-                            if (ReportProgress != null) ReportProgress(this, counter);
+                            if (ReportProgress != null)
+                            {
+                                ReportProgress(this, counter);
+                            }
                         }
                     }
                 }
             }
-            if (features.Count>0)
+            if (features.Count > 0 && _cancelTracker.Continue)
             {
                 if (!await fdb.Insert(dest, features))
                 {
@@ -275,7 +307,10 @@ namespace gView.Framework.system.UI
                     return false;
                 }
                 features.Clear();
-                if (ReportProgress != null) ReportProgress(this, counter);
+                if (ReportProgress != null)
+                {
+                    ReportProgress(this, counter);
+                }
             }
             return true;
         }

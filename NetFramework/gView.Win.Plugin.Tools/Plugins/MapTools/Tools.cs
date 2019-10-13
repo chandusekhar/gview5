@@ -118,7 +118,7 @@ namespace gView.Plugins.MapTools
                             }
                             else
                             {
-                                IGeometry geom = GeometricTransformer.Transform2D(classEnv.ToPolygon(0), sRef, map.Display.SpatialReference);
+                                IGeometry geom = GeometricTransformerFactory.Transform2D(classEnv.ToPolygon(0), sRef, map.Display.SpatialReference);
                                 if (geom != null)
                                     classEnv = geom.Envelope;
                                 else
@@ -167,7 +167,7 @@ namespace gView.Plugins.MapTools
 
         public object Image
         {
-            get { return global::gView.Win.Plugins.Tools.Properties.Resources.add_data; }
+            get { return gView.Win.Plugin.Tools.Properties.Resources.add_data; }
         }
 
         public ToolType toolType

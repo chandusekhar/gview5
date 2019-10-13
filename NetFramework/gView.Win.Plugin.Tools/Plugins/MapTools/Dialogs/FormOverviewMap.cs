@@ -95,7 +95,7 @@ namespace gView.Plugins.MapTools.Dialogs
             if (display.SpatialReference != null &&
                 !display.SpatialReference.Equals(_ovmap.Display.SpatialReference))
             {
-                mapEnv = GeometricTransformer.Transform2D(
+                mapEnv = GeometricTransformerFactory.Transform2D(
                     mapEnv, display.SpatialReference,
                     _ovmap.Display.SpatialReference);
             }
@@ -193,14 +193,14 @@ namespace gView.Plugins.MapTools.Dialogs
 
                 ToolStripMenuItem item = new ToolStripMenuItem(
                     "Zoom to actual extent",
-                    global::gView.Win.Plugins.Tools.Properties.Resources.zoom
+                    gView.Win.Plugin.Tools.Properties.Resources.zoom
                     );
                 item.Click += new EventHandler(zoom2actual_Click);
                 _contextMenu.Items.Add(item);
 
                 item = new ToolStripMenuItem(
                     "Zoom to maximum extent",
-                    global::gView.Win.Plugins.Tools.Properties.Resources.map16);
+                    gView.Win.Plugin.Tools.Properties.Resources.map16);
 
                 item.Click += new EventHandler(zoom2max_Click);
                 _contextMenu.Items.Add(item);
@@ -218,7 +218,7 @@ namespace gView.Plugins.MapTools.Dialogs
                 if (_doc.FocusMap.Display.SpatialReference != null &&
                     !_doc.FocusMap.Display.SpatialReference.Equals(_ovmap.Display.SpatialReference))
                 {
-                    extent = GeometricTransformer.Transform2D(
+                    extent = GeometricTransformerFactory.Transform2D(
                         extent,
                         _doc.FocusMap.Display.SpatialReference,
                         _ovmap.Display.SpatialReference).Envelope;
@@ -238,7 +238,7 @@ namespace gView.Plugins.MapTools.Dialogs
                 if (_doc.FocusMap.Display.SpatialReference != null &&
                     !_doc.FocusMap.Display.SpatialReference.Equals(_ovmap.Display.SpatialReference))
                 {
-                    extent = GeometricTransformer.Transform2D(
+                    extent = GeometricTransformerFactory.Transform2D(
                         extent,
                         _doc.FocusMap.Display.SpatialReference,
                         _ovmap.Display.SpatialReference).Envelope;
@@ -307,7 +307,7 @@ namespace gView.Plugins.MapTools.Dialogs
                 if (ev.Map.Display.SpatialReference != null &&
                     !ev.Map.Display.SpatialReference.Equals(_doc.FocusMap.Display.SpatialReference))
                 {
-                    extent = GeometricTransformer.Transform2D(
+                    extent = GeometricTransformerFactory.Transform2D(
                         extent,
                         ev.Map.Display.SpatialReference,
                         _doc.FocusMap.Display.SpatialReference).Envelope;

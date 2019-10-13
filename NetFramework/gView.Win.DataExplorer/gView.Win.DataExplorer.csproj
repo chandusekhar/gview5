@@ -14,6 +14,21 @@
     <WarningLevel>4</WarningLevel>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -29,14 +44,14 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\bin\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\Debug\</OutputPath>
+    <OutputPath>..\bin\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
@@ -45,7 +60,7 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutputPath>bin\x64\Release\</OutputPath>
+    <OutputPath>..\bin\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
@@ -190,6 +205,10 @@
       <Project>{1730a1e1-3991-46d0-a52a-1a86b6ccb8f0}</Project>
       <Name>gView.Data.Joins</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\gView.DataSources.CosmoDb\gView.DataSources.CosmoDb.csproj">
+      <Project>{10d9cdc6-adcf-48f8-807e-1b31bef9eb32}</Project>
+      <Name>gView.DataSources.CosmoDb</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\gView.DataSources.EventTable\gView.DataSources.EventTable.csproj">
       <Project>{77afd455-9fd0-4087-8163-44ba03886670}</Project>
       <Name>gView.DataSources.EventTable</Name>
@@ -209,6 +228,10 @@
     <ProjectReference Include="..\..\gView.DataSources.Fdb\gView.DataSources.Fdb.csproj">
       <Project>{595657d6-c9dc-4a48-a5d0-3cbc4a90ada1}</Project>
       <Name>gView.DataSources.Fdb</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\gView.DataSources.MongoDb\gView.DataSources.MongoDb.csproj">
+      <Project>{faeabc8e-55fd-4d3e-9759-83d0fb94c9fb}</Project>
+      <Name>gView.DataSources.MongoDb</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\gView.DataSources.MSSqlSpatial\gView.DataSources.MSSqlSpatial.csproj">
       <Project>{5326d7f9-707e-45e2-92d2-5cb92d0ff897}</Project>
@@ -338,6 +361,10 @@
       <Project>{0d117d2f-1812-437a-a984-451e2073a352}</Project>
       <Name>gView.Win.Data.Joins.UI</Name>
     </ProjectReference>
+    <ProjectReference Include="..\gView.Win.DataSources.CosmoDb.UI\gView.Win.DataSources.CosmoDb.UI.csproj">
+      <Project>{a4d020d4-c6ea-4067-a19f-6a64c30a5021}</Project>
+      <Name>gView.Win.DataSources.CosmoDb.UI</Name>
+    </ProjectReference>
     <ProjectReference Include="..\gView.Win.DataSources.EventTable.UI\gView.Win.DataSources.EventTable.UI.csproj">
       <Project>{95e1c61e-50ff-4ab8-816e-115dc4c53ba4}</Project>
       <Name>gView.Win.DataSources.EventTable.UI</Name>
@@ -345,6 +372,10 @@
     <ProjectReference Include="..\gView.Win.Datasources.Fdb.UI\gView.Win.DataSources.Fdb.UI.csproj">
       <Project>{b3944c41-5bb6-4cbc-9173-59d5e50f74a4}</Project>
       <Name>gView.Win.DataSources.Fdb.UI</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\gView.Win.DataSources.MongoDb.UI\gView.Win.DataSources.MongoDb.UI.csproj">
+      <Project>{84636d73-d607-441c-b069-b4c6e06a0b75}</Project>
+      <Name>gView.Win.DataSources.MongoDb.UI</Name>
     </ProjectReference>
     <ProjectReference Include="..\gView.Win.DataSources.MSSqlSpatial.UI\gView.Win.DataSources.MSSqlSpatial.UI.csproj">
       <Project>{58919130-d4fd-4346-a2df-b5728201da86}</Project>
@@ -516,6 +547,18 @@
     <Content Include="menu.explorer.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.7.2 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -6,7 +6,6 @@ using gView.Framework.system;
 using gView.Framework.UI;
 using gView.MapServer;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
@@ -17,7 +16,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
 
 namespace gView.Server.AppCode
 {
@@ -33,22 +31,24 @@ namespace gView.Server.AppCode
         static internal string OnlineResource = String.Empty;
         static internal List<Type> Interpreters = new List<Type>();
         static internal License myLicense = null;
-        static internal ConcurrentBag<IMapService> mapServices = new ConcurrentBag<IMapService>();
+        static internal ConcurrentBag<IMapService> MapServices = new ConcurrentBag<IMapService>();
         static internal MapServerInstance Instance = null;
-        static internal Acl acl = null;
 
         async static public Task Init(string rootPath, int port = 80)
         {
-            Globals.ForceHttps = true;  // DoTo: Set this by Environment Variable or config value;
+            
             Globals.AppRootPath = rootPath;
-           
+
             var mapServerConfig = JsonConvert.DeserializeObject<MapServerConfig>(File.ReadAllText(rootPath + "/_config/mapserver.json"));
+
             OutputPath = mapServerConfig.OuputPath.ToPlattformPath();
             OutputUrl = mapServerConfig.OutputUrl;
             OnlineResource = mapServerConfig.OnlineResourceUrl;
             TileCachePath = mapServerConfig.TileCacheRoot;
 
-            if(mapServerConfig.TaskQueue!=null)
+            Globals.ForceHttps = mapServerConfig.ForceHttps.HasValue && mapServerConfig.ForceHttps.Value == false ? false : true;  // default: true
+
+            if (mapServerConfig.TaskQueue != null)
             {
                 Globals.MaxThreads = Math.Max(1, mapServerConfig.TaskQueue.MaxParallelTasks);
                 Globals.QueueLength = Math.Max(10, mapServerConfig.TaskQueue.MaxQueueLength);
@@ -59,6 +59,13 @@ namespace gView.Server.AppCode
             ServicesPath = mapServerConfig.ServiceFolder + "/services";
             Globals.LoginManagerRootPath = mapServerConfig.ServiceFolder + "/_login";
             Globals.LoggingRootPath = mapServerConfig.ServiceFolder + "/log";
+
+            Globals.AllowFormsLogin = mapServerConfig.AllowFormsLogin == false ? false : true;
+
+            if(mapServerConfig.ExternalAuthService!=null && mapServerConfig.ExternalAuthService.IsValid)
+            {
+                Globals.ExternalAuthService=mapServerConfig.ExternalAuthService;
+            }
 
             foreach (string createDirectroy in new string[] {
                 ServicesPath,
@@ -75,7 +82,7 @@ namespace gView.Server.AppCode
             }
 
             await AddServices(String.Empty);
-            
+
 
             var pluginMananger = new PlugInManager();
             foreach (Type interpreterType in pluginMananger.GetPlugins(typeof(IServiceRequestInterpreter)))
@@ -96,7 +103,9 @@ namespace gView.Server.AppCode
                 try
                 {
                     if (TryAddService(mapFileInfo, folder) == null)
+                    {
                         throw new Exception("unable to load servive: " + mapFileInfo.FullName);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -109,9 +118,9 @@ namespace gView.Server.AppCode
             foreach (var folderDirectory in new DirectoryInfo((ServicesPath + "/" + folder).ToPlattformPath()).GetDirectories())
             {
                 MapService folderService = new MapService(folderDirectory.FullName, folder, MapServiceType.Folder);
-                if (mapServices.Where(s => s.Fullname == folderService.Fullname && s.Type == folderService.Type).Count() == 0)
+                if (MapServices.Where(s => s.Fullname == folderService.Fullname && s.Type == folderService.Type).Count() == 0)
                 {
-                    mapServices.Add(folderService);
+                    MapServices.Add(folderService);
                     Console.WriteLine("folder " + folderService.Name + " added");
                 }
             }
@@ -125,13 +134,15 @@ namespace gView.Server.AppCode
             lock (_tryAddServiceLocker)
             {
                 if (!mapFileInfo.Exists)
+                {
                     return null;
+                }
 
                 MapService mapService = new MapService(mapFileInfo.FullName, folder, MapServiceType.MXL);
-                if (mapServices.Where(s => s.Fullname == mapService.Fullname && s.Type == mapService.Type).Count() > 0)
+                if (MapServices.Where(s => s.Fullname == mapService.Fullname && s.Type == mapService.Type).Count() > 0)
                 {
                     // allready exists
-                    return mapServices.Where(s => s.Fullname == mapService.Fullname && s.Type == mapService.Type).FirstOrDefault();
+                    return MapServices.Where(s => s.Fullname == mapService.Fullname && s.Type == mapService.Type).FirstOrDefault();
                 }
 
                 if (!String.IsNullOrWhiteSpace(folder))
@@ -145,9 +156,9 @@ namespace gView.Server.AppCode
                         DirectoryInfo folderDirectory = new DirectoryInfo((ServicesPath + "/" + folder).ToPlattformPath());
                         MapService folderService = new MapService(folderDirectory.FullName, parentFolder, MapServiceType.Folder);
 
-                        if (mapServices.Where(s => s.Fullname == folderService.Fullname && s.Type == folderService.Type).Count() == 0)
+                        if (MapServices.Where(s => s.Fullname == folderService.Fullname && s.Type == folderService.Type).Count() == 0)
                         {
-                            mapServices.Add(folderService);
+                            MapServices.Add(folderService);
                             Console.WriteLine("folder " + folderService.Name + " added");
                         }
 
@@ -157,7 +168,7 @@ namespace gView.Server.AppCode
                     #endregion
                 }
 
-                mapServices.Add(mapService);
+                MapServices.Add(mapService);
                 Console.WriteLine("service " + mapService.Name + " added");
 
                 return mapService;
@@ -183,7 +194,7 @@ namespace gView.Server.AppCode
             }
             try
             {
-                if (forceRefresh == true || InternetMapServer.mapServices.Where(s => s.Type != MapServiceType.Folder && s.Folder == folder).Count() == 0)
+                if (forceRefresh == true || InternetMapServer.MapServices.Where(s => s.Type != MapServiceType.Folder && s.Folder == folder).Count() == 0)
                 {
                     await InternetMapServer.AddServices(folder);
                 }
@@ -199,7 +210,10 @@ namespace gView.Server.AppCode
             try
             {
                 DirectoryInfo di = new DirectoryInfo(ServicesPath);
-                if (!di.Exists) di.Create();
+                if (!di.Exists)
+                {
+                    di.Create();
+                }
 
                 FileInfo fi = new FileInfo(ServicesPath + @"/" + name + ".mxl");
                 if (fi.Exists)
@@ -212,7 +226,7 @@ namespace gView.Server.AppCode
                         var map = doc.Maps.First();
                         if (map.Name != name &&
                             name.Contains("/") &&
-                            !map.Name.StartsWith(name.FolderName()+"/")) // Folder?
+                            !map.Name.StartsWith(name.FolderName() + "/")) // Folder?
                         {
                             map.Name = name.Split('/')[0] + "/" + map.Name;
                         }
@@ -220,18 +234,20 @@ namespace gView.Server.AppCode
                         await ApplyMetadata(map as Map);
 
                         if (!MapDocument.AddMap(map))
+                        {
                             return null;
+                        }
 
                         MapDocument.SetMapModules(map, doc.GetMapModules(map));
 
-                        var mapService = InternetMapServer.mapServices.Where(s => s.Fullname == map.Name).FirstOrDefault();
-                        if(mapService!=null)
+                        var mapService = InternetMapServer.MapServices.Where(s => s.Fullname == map.Name).FirstOrDefault();
+                        if (mapService != null)
                         {
                             mapService.ServiceRefreshed();
                         }
-                        if(map.HasErrorMessages)
+                        if (map.HasErrorMessages)
                         {
-                            foreach(var errorMessage in map.ErrorMessages)
+                            foreach (var errorMessage in map.ErrorMessages)
                             {
                                 await Logger.LogAsync(map.Name, loggingMethod.error, errorMessage);
                             }
@@ -253,8 +269,12 @@ namespace gView.Server.AppCode
         {
             try
             {
-                if (map == null) return;
-                FileInfo fi = new FileInfo(ServicesPath + @"\" + map.Name + ".meta");
+                if (map == null)
+                {
+                    return;
+                }
+
+                FileInfo fi = new FileInfo(ServicesPath + @"/" + map.Name + ".meta");
 
                 IEnumerable<IMapApplicationModule> modules = null;
                 if (InternetMapServer.MapDocument is IMapDocumentModules)
@@ -277,7 +297,7 @@ namespace gView.Server.AppCode
 
                 if (map is Metadata)
                 {
-                    await ((Metadata)map).SetProviders(await sMap.GetProviders());
+                    await map.SetProviders(await sMap.GetProviders());
                 }
 
                 // Overriding: no good idea -> problem, if multiple instances do this -> killing the metadata file!!!
@@ -296,7 +316,10 @@ namespace gView.Server.AppCode
         {
             try
             {
-                if (MapDocument == null) return;
+                if (MapDocument == null)
+                {
+                    return;
+                }
 
                 //ServerMapDocument doc = new ServerMapDocument();
                 //if (!doc.AddMap(map))
@@ -304,15 +327,19 @@ namespace gView.Server.AppCode
 
                 var map = mapDocument?.Maps.First() as Map;
                 if (map == null)
+                {
                     throw new MapServerException("Mapdocument don't contain a map");
+                }
 
                 XmlStream stream = new XmlStream("MapServer");
                 stream.Save("MapDocument", mapDocument);
 
-                stream.WriteStream(ServicesPath + @"\" + map.Name + ".mxl");
+                stream.WriteStream(ServicesPath + "/" + map.Name + ".mxl");
 
                 if (map is Map)
-                    await ApplyMetadata((Map)map);
+                {
+                    await ApplyMetadata(map);
+                }
             }
             catch (Exception ex)
             {
@@ -347,17 +374,24 @@ namespace gView.Server.AppCode
 
         static public void SaveServiceCollection(string name, XmlStream stream)
         {
-            stream.WriteStream(ServicesPath + @"\" + name + ".scl");
+            stream.WriteStream(ServicesPath + "/" + name + ".scl");
         }
 
         async static public Task<bool> RemoveConfig(string mapName)
         {
             try
             {
-                FileInfo fi = new FileInfo(ServicesPath + @"\" + mapName + ".mxl");
-                if (fi.Exists) fi.Delete();
-                fi = new FileInfo(ServicesPath + @"\" + mapName + ".svc");
-                if (fi.Exists) fi.Delete();
+                FileInfo fi = new FileInfo(ServicesPath + "/" + mapName + ".mxl");
+                if (fi.Exists)
+                {
+                    fi.Delete();
+                }
+
+                fi = new FileInfo(ServicesPath + "/" + mapName + ".svc");
+                if (fi.Exists)
+                {
+                    fi.Delete();
+                }
 
                 return true;
             }
@@ -400,7 +434,9 @@ namespace gView.Server.AppCode
         {
             var interpreter = new PlugInManager().CreateInstance<IServiceRequestInterpreter>(type);
             if (interpreter == null)
+            {
                 throw new Exception("Can't intialize interperter");
+            }
 
             interpreter.OnCreate(Instance);
             return interpreter;
@@ -410,7 +446,9 @@ namespace gView.Server.AppCode
         {
             var interpreter = new PlugInManager().CreateInstance(guid) as IServiceRequestInterpreter;
             if (interpreter == null)
+            {
                 throw new Exception("Can't intialize interperter");
+            }
 
             interpreter.OnCreate(Instance);
             return interpreter;
@@ -418,22 +456,33 @@ namespace gView.Server.AppCode
 
         #region Manage
 
-        async static public Task<bool> AddMap(string mapName, string MapXML, string usr, string pwd)
+        async static public Task<bool> AddMap(string mapName, string mapXml, string usr, string pwd)
+        {
+            await CheckPublishAccess(mapName.FolderName(), usr, pwd);
+            return await AddMap(mapName, mapXml);
+        }
+
+        async static public Task<bool> AddMap(string mapName, string mapXml, IIdentity identity)
+        {
+            await CheckPublishAccess(mapName.FolderName(), identity);
+            return await AddMap(mapName, mapXml);
+        }
+
+        async static private Task<bool> AddMap(string mapName, string mapXml)
         {
             string folder = mapName.FolderName();
             if (!String.IsNullOrWhiteSpace(folder))
             {
                 if (!Directory.Exists((InternetMapServer.ServicesPath + "/" + folder).ToPlattformPath()))
+                {
                     throw new MapServerException("Folder not exists");
+                }
             }
 
-            if (String.IsNullOrEmpty(MapXML))
+            if (String.IsNullOrEmpty(mapXml))
             {
-                return await ReloadMap(mapName, usr, pwd);
+                return await ReloadMap(mapName);
             }
-
-            if (InternetMapServer.acl != null && !InternetMapServer.acl.HasAccess(Identity.FromFormattedString(usr), pwd, "admin_addmap"))
-                return false;
 
             if ((await InternetMapServer.Instance.Maps(null)).Count() >= InternetMapServer.Instance.MaxServices)
             {
@@ -449,19 +498,29 @@ namespace gView.Server.AppCode
                     }
                 }
                 if (!found)
-                    return false;
+                {
+                    //return false;
+                    throw new MapServerException("Unknown error");
+                }
             }
 
             XmlStream xmlStream = new XmlStream("MapDocument");
 
-            using (StringReader sr = new StringReader(MapXML))
-                if (!xmlStream.ReadStream(sr)) return false;
+            using (StringReader sr = new StringReader(mapXml))
+            {
+                if (!xmlStream.ReadStream(sr))
+                {
+                    throw new MapServerException("Unable to read MapXML");
+                }
+            }
 
             ServerMapDocument mapDocument = new ServerMapDocument();
             await mapDocument.LoadAsync(xmlStream);
 
             if (mapDocument.Maps.Count() == 0)
+            {
                 throw new MapServerException("No maps found in document");
+            }
 
             var map = mapDocument.Maps.First() as Map;
             //Map map = new Map();
@@ -493,11 +552,18 @@ namespace gView.Server.AppCode
             }
 
             if (errors.Length > 0)
+            {
                 throw new MapServerException(errors.ToString());
+            }
 
             XmlStream pluginStream = new XmlStream("Moduls");
-            using (StringReader sr = new StringReader(MapXML))
-                if (!xmlStream.ReadStream(sr)) return false;
+            using (StringReader sr = new StringReader(mapXml))
+            {
+                if (!xmlStream.ReadStream(sr))
+                {
+                    throw new MapServerException("Unable to read MapXML (Moduls)");
+                }
+            }
 
             ModulesPersists modules = new ModulesPersists(map);
             modules.Load(pluginStream);
@@ -512,44 +578,49 @@ namespace gView.Server.AppCode
 
             await InternetMapServer.SaveConfig(mapDocument);
 
-            return await ReloadMap(mapName, usr, pwd);
+            return await ReloadMap(mapName);
         }
+
         async static public Task<bool> RemoveMap(string mapName, string usr, string pwd)
         {
-            if (InternetMapServer.acl != null && !InternetMapServer.acl.HasAccess(Identity.FromFormattedString(usr), pwd, "admin_removemap"))
-                return false;
+            await CheckPublishAccess(mapName.FolderName(), usr, pwd);
 
-            bool found = false;
+            return await RemoveMap(mapName);
+        }
 
-            foreach (IMapService service in InternetMapServer.mapServices.ToArray())
+        async static public Task<bool> RemoveMap(string mapName, IIdentity identity)
+        {
+            await CheckPublishAccess(mapName.FolderName(), identity);
+            return await RemoveMap(mapName);
+        }
+
+        async static private Task<bool> RemoveMap(string mapName)
+        { 
+            var mapService = GetMapService(mapName);
+            if (mapService != null)
             {
-                if (service.Name == mapName)
-                {
-                    InternetMapServer.mapServices = new ConcurrentBag<IMapService>(InternetMapServer.mapServices.Except(new[] { service }));
-                    found = true;
-                }
+                MapServices = new ConcurrentBag<IMapService>(MapServices.Except(new[] { mapService }));
             }
-
-            foreach (IMapService m in ListOperations<IMapService>.Clone((await InternetMapServer.Instance.Maps(null)).ToList()))
-            {
-                if (m.Name == mapName)
-                {
-                    //_doc.RemoveMap(m);
-                    found = true;
-                }
-            }
+            MapDocument.RemoveMap(mapName);
             await InternetMapServer.RemoveConfig(mapName);
 
-            return found;
+            await InternetMapServer.ReloadServices(mapName.FolderName(), true);
+
+            return true;
         }
 
         async static public Task<bool> ReloadMap(string mapName, string usr, string pwd)
         {
-            if (InternetMapServer.acl != null && !InternetMapServer.acl.HasAccess(Identity.FromFormattedString(usr), pwd, mapName))
-                return false;
+            await CheckPublishAccess(mapName.FolderName(), usr, pwd);
+            return await ReloadMap(mapName);
+        }
 
-            
-            if (MapDocument == null) return false;
+        async static private Task<bool> ReloadMap(string mapName)
+        { 
+            if (MapDocument == null)
+            {
+                return false;
+            }
 
             MapDocument.RemoveMap(mapName);
             return await LoadMap(mapName) != null;
@@ -600,16 +671,21 @@ namespace gView.Server.AppCode
 
         async static public Task<string> GetMetadata(string mapName, string usr, string pwd)
         {
-            if (InternetMapServer.acl != null && !InternetMapServer.acl.HasAccess(Identity.FromFormattedString(usr), pwd, "admin_metadata_get"))
-                return "ERROR: Not Authorized!";
+            await CheckPublishAccess(mapName.FolderName(), usr, pwd);
 
-            if (!await ReloadMap(mapName, usr, pwd)) return String.Empty;
+            if (!await ReloadMap(mapName, usr, pwd))
+            {
+                return String.Empty;
+            }
 
             //if (IMS.mapServer == null || IMS.mapServer[mapName] == null)
             //    return String.Empty;
 
             FileInfo fi = new FileInfo((InternetMapServer.ServicesPath + @"/" + mapName + ".meta").ToPlattformPath());
-            if (!fi.Exists) return String.Empty;
+            if (!fi.Exists)
+            {
+                return String.Empty;
+            }
 
             using (StreamReader sr = new StreamReader(fi.FullName.ToPlattformPath()))
             {
@@ -620,8 +696,7 @@ namespace gView.Server.AppCode
         }
         async static public Task<bool> SetMetadata(string mapName, string metadata, string usr, string pwd)
         {
-            if (InternetMapServer.acl != null && !InternetMapServer.acl.HasAccess(Identity.FromFormattedString(usr), pwd, "admin_metadata_set"))
-                return false;
+            await CheckPublishAccess(mapName.FolderName(), usr, pwd);
 
             FileInfo fi = new FileInfo(InternetMapServer.ServicesPath + @"/" + mapName + ".meta");
 
@@ -635,22 +710,24 @@ namespace gView.Server.AppCode
 
         static private void AddMapService(string mapName, MapServiceType type)
         {
-            foreach (IMapService service in InternetMapServer.mapServices)
+            foreach (IMapService service in InternetMapServer.MapServices)
             {
                 if (service.Fullname == mapName)
+                {
                     return;
+                }
             }
             string folder = String.Empty;
-            if(mapName.Contains("/"))
+            if (mapName.Contains("/"))
             {
-                if(mapName.Split('/').Length>2)
+                if (mapName.Split('/').Length > 2)
                 {
                     throw new Exception("Invalid map name: " + mapName);
                 }
                 folder = mapName.Split('/')[0];
                 mapName = mapName.Split('/')[1];
             }
-            InternetMapServer.mapServices.Add(new MapService(mapName.Trim(), folder.Trim(), type));
+            InternetMapServer.MapServices.Add(new MapService(mapName.Trim(), folder.Trim(), type));
         }
 
         #endregion
@@ -706,6 +783,67 @@ namespace gView.Server.AppCode
         //        }
         //    }
         //}
+
+        #endregion
+
+        #region Helper
+
+        static private IMapService GetMapService(string id)
+        {
+            var mapService = InternetMapServer.MapServices
+                        .Where(f => f.Type == MapServiceType.MXL && id.Equals(f.Fullname, StringComparison.InvariantCultureIgnoreCase))
+                        .FirstOrDefault();
+
+            return mapService;
+        }
+
+        static private IMapService GetFolderService(string id)
+        {
+            var folderService = InternetMapServer.MapServices
+                        .Where(f => f.Type == MapServiceType.Folder && String.IsNullOrWhiteSpace(f.Folder) && id.Equals(f.Name, StringComparison.InvariantCultureIgnoreCase))
+                        .FirstOrDefault();
+
+            return folderService;
+        }
+
+        static private IIdentity GetIdentity(string user, string password)
+        {
+            if (String.IsNullOrWhiteSpace(user))
+            {
+                return new Identity(Identity.AnonyomousUsername);
+            }
+
+            var loginManager = new LoginManager(Globals.LoginManagerRootPath);
+            var authToken = loginManager.GetAuthToken(user, password);
+
+            if (authToken == null)
+            {
+                throw new MapServerException("Unknown user or password");
+            }
+
+            return new Identity(user);
+        }
+
+        async static private Task CheckPublishAccess(string folder, string usr, string pwd)
+        {
+            var identity = GetIdentity(usr, pwd);
+
+            await CheckPublishAccess(folder, identity);
+        }
+
+        async static private Task CheckPublishAccess(string folder, IIdentity identity)
+        {
+            var folderService = GetFolderService(folder);
+            if (folderService == null)
+            {
+                throw new MapServerException("Unknown folder: " + folder);
+            }
+
+            if (!await folderService.HasPublishAccess(identity))
+            {
+                throw new MapServerException("Forbidden for user " + identity.UserName);
+            }
+        }
 
         #endregion
     }

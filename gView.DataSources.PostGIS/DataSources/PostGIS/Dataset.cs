@@ -1,19 +1,17 @@
+using gView.Framework.Data;
+using gView.Framework.Db;
+using gView.Framework.Geometry;
+using gView.Framework.OGC.DB;
+using gView.Framework.system;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Data;
-using gView.Framework.Data;
-using gView.Framework.Geometry;
-using gView.Framework.IO;
-using gView.Framework.FDB;
 using System.Data.Common;
-using gView.Framework.system;
-using gView.Framework.OGC.DB;
+using System.Threading.Tasks;
 
 namespace gView.DataSources.PostGIS
 {
     [UseDatasetNameCase(DatasetNameCase.classNameLower)]
-    [RegisterPlugIn("206CF40B-D4D9-4e85-B872-D2E63C3556BA")]
+    [RegisterPlugInAttribute("206CF40B-D4D9-4e85-B872-D2E63C3556BA")]
     public class PostGISDataset : gView.Framework.OGC.DB.OgcSpatialDataset, IPlugInDependencies
     {
         DbProviderFactory _factory = null;
@@ -66,6 +64,14 @@ namespace gView.DataSources.PostGIS
             }
         }
 
+        async public override Task<bool> SetConnectionString(string value)
+        {
+            var ret = await base.SetConnectionString(value);
+            _connectionString = DbConnectionString.ParseNpgsqlConnectionString(_connectionString);
+
+            return ret;
+        }
+
         public override string SelectReadSchema(string tableName)
         {
             return base.SelectReadSchema(tableName) + " limit 0";
@@ -97,24 +103,28 @@ namespace gView.DataSources.PostGIS
         {
             try
             {
+                _connectionString = DbConnectionString.ParseNpgsqlConnectionString(_connectionString);
                 _factory = Npgsql.NpgsqlFactory.Instance;
 
                 #region Version
+
                 try
                 {
                     object obj = base.ExecuteFunction("select postgis_version()");
                     if (obj is string)
                     {
-                        if (obj.ToString().StartsWith("2."))
-                            _majorVersion = 2;
-                        else
+                        string version = obj.ToString();
+                        if (!int.TryParse(version.Split('.')[0], out _majorVersion))
+                        {
                             _majorVersion = 1;
+                        }
                     }
                 }
                 catch
                 {
                     _majorVersion = 1;
                 }
+
                 #endregion
             }
             catch
@@ -138,7 +148,7 @@ namespace gView.DataSources.PostGIS
 
         protected override string AddGeometryColumn(string schemaName, string tableName, string colunName, string srid, string geomTypeString)
         {
-            if (_majorVersion == 2)
+            if (_majorVersion >= 2)
             {
                 return "SELECT " + DbSchemaPrefix + "AddGeometryColumn ('" + schemaName + "','" + tableName + "','" + colunName + "','" + srid + "','" + geomTypeString + "','2',true)";
             }
@@ -167,7 +177,7 @@ namespace gView.DataSources.PostGIS
 
                     //return false;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     return true;
                 }
@@ -180,10 +190,14 @@ namespace gView.DataSources.PostGIS
             try
             {
                 if (tableName.Contains("."))  // Tablename includes schema
+                {
                     return String.Empty;
+                }
 
                 if (_tableDbSchema.ContainsKey(tableName))
+                {
                     return _tableDbSchema[tableName];
+                }
 
                 using (DbConnection conn = _factory.CreateConnection())
                 {
@@ -215,6 +229,27 @@ namespace gView.DataSources.PostGIS
                 }
             }
             catch { return String.Empty; }
+        }
+
+        override protected string GetTableDbName(string fullTableName)
+        {
+            if (fullTableName.Contains("."))
+            {
+                return fullTableName.Substring(fullTableName.LastIndexOf(".") + 1);
+            }
+
+            return fullTableName;
+        }
+
+        override protected string GetTableDbSchemaName(string fullTableName)
+        {
+            if (fullTableName.Contains("."))
+            {
+                var parts = fullTableName.Split('.');
+                return parts[parts.Length - 2];   // vorletztes element
+            }
+
+            return String.Empty;
         }
 
         public override bool CanEditFeatureClass(IFeatureClass fc, EditCommands command)

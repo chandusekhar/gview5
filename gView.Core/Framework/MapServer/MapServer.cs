@@ -51,6 +51,8 @@ namespace gView.MapServer
         Task CheckAccess(IIdentity identity, IServiceRequestInterpreter interpreter);
         Task<bool> HasAnyAccess(IIdentity identity);
         Task<AccessTypes> GetAccessTypes(IIdentity identity);
+
+        Task<bool> HasPublishAccess(IIdentity identity);
     }
 
     public enum MapServiceStatus
@@ -74,6 +76,15 @@ namespace gView.MapServer
         Map = 1,
         Query = 2,
         Edit = 4
+    }
+
+    public enum FolderAccessTypes
+    {
+        None = 0,
+        Map = 1,
+        Query = 2,
+        Edit = 4,
+        Publish = 8
     }
 
     public interface IMapServiceAccess

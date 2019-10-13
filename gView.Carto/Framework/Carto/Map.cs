@@ -908,6 +908,8 @@ namespace gView.Framework.Carto
             }
         }
 
+        public bool IsRefreshing { get; private set; }
+
         async virtual public Task<bool> RefreshMap(DrawPhase phase, ICancelTracker cancelTracker)
         {
             _requestExceptions = null;
@@ -920,6 +922,8 @@ namespace gView.Framework.Carto
 
             try
             {
+                this.IsRefreshing = true;
+
                 _lastException = null;
 
                 if (_graphics != null && phase == DrawPhase.Graphics)
@@ -935,7 +939,7 @@ namespace gView.Framework.Carto
                     cancelTracker = new CancelTracker();
                 }
 
-                GeometricTransformer geoTransformer = new GeometricTransformer();
+                IGeometricTransformer geoTransformer = GeometricTransformerFactory.Create();
                 //geoTransformer.ToSpatialReference = this.SpatialReference;
                 if (!printerMap)
                 {
@@ -1396,6 +1400,8 @@ namespace gView.Framework.Carto
 
                     _graphics = null;
                 }
+
+                this.IsRefreshing = false;
             }
         }
 
@@ -1507,11 +1513,15 @@ namespace gView.Framework.Carto
         }
         #endregion
 
+        private DateTime _lastRefresh = DateTime.UtcNow;
         internal void FireRefreshMapView()
         {
             if (this.DoRefreshMapView != null)
             {
-                this.DoRefreshMapView();
+                if ((DateTime.UtcNow - _lastRefresh).TotalMilliseconds > 100) {
+                    this.DoRefreshMapView();
+                    _lastRefresh = DateTime.UtcNow;
+                }
             }
         }
 
@@ -2983,7 +2993,7 @@ namespace gView.Framework.Carto
                 return geometry;
             }
 
-            GeometricTransformer transformer = new GeometricTransformer();
+            IGeometricTransformer transformer = GeometricTransformerFactory.Create();
 
             //transformer.FromSpatialReference = geometrySpatialReference;
             //transformer.ToSpatialReference = _spatialReference;
@@ -3346,6 +3356,7 @@ namespace gView.Framework.Carto
                 filter.AddField(fClass.ShapeFieldName);
                 //filter.FuzzyQuery = true;
                 filter.SpatialRelation = spatialRelation.SpatialRelationMapEnvelopeIntersects;
+                filter.MapScale = _map.Display.mapScale;
 
                 if (layer.FilterQuery != null)
                 {
@@ -3453,13 +3464,14 @@ namespace gView.Framework.Carto
 
                                 _counter.Counter++;
 
-                                if (_counter.Counter % 10000 == 0)
+                                //  To Do: nur aufrufen, wenn Karte nicht ServiceMap oder PrintMap ist....?
+                                //if (_counter.Counter % 10000 == 0)
                                 {
                                     _map.FireRefreshMapView();
                                 }
                             }
                         }
-                        else if (labelRenderer != null)
+                        else if (labelRenderer != null && _cancelTracker.Continue)
                         {
                             while ((feature = await fCursor.NextFeature()) != null)
                             {
@@ -3473,8 +3485,6 @@ namespace gView.Framework.Carto
 
                                 labelRenderer.Draw(_map, feature);
                                 _counter.Counter++;
-
-
                             }
                         }
                         if (labelRenderer != null)

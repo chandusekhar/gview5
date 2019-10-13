@@ -853,7 +853,7 @@ namespace gView.Framework.Symbology
         public object PropertyPage(object initObject)
         {
             string appPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"\gView.Win.Symbology.UI.dll");
+            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"/gView.Win.Symbology.UI.dll");
 
             IPropertyPanel p = uiAssembly.CreateInstance("gView.Framework.Symbology.UI.PropertyForm_SimpleTextSymbol") as IPropertyPanel;
             if (p != null)
@@ -916,7 +916,7 @@ namespace gView.Framework.Symbology
 
         #region Helper
 
-        protected void DrawString(Graphics gr, string text, Font font, SolidBrush brush, float xOffset, float yOffset, StringFormat format)
+        protected void DrawString(System.Drawing.Graphics/*IGraphicsEngine*/ gr, string text, Font font, SolidBrush brush, float xOffset, float yOffset, StringFormat format)
         {
             if (IncludesSuperScript == true)
             {
@@ -1187,7 +1187,7 @@ namespace gView.Framework.Symbology
         }
     }
 
-    [RegisterPlugIn("A06F8B12-394E-4F8E-8B9A-6025F96F6F4F")]
+    [RegisterPlugInAttribute("A06F8B12-394E-4F8E-8B9A-6025F96F6F4F")]
     public class BlockoutTextSymbol : SimpleTextSymbol
     {
         protected SolidBrush _outlinebrush;

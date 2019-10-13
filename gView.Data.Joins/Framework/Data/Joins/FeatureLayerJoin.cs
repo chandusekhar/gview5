@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace gView.Framework.Data.Joins
 {
-    [RegisterPlugIn("b480ce21-7e05-4153-89ee-331ebc4b3167")]
+    [RegisterPlugInAttribute("b480ce21-7e05-4153-89ee-331ebc4b3167")]
     public class FeatureLayerJoin : IFeatureLayerJoin, IPropertyPage
     {
         private IMap _map;
@@ -231,7 +231,7 @@ namespace gView.Framework.Data.Joins
             if (initObject is IMapDocument)
             {
                 string appPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-                Assembly uiAssembly = Assembly.LoadFrom(appPath + @"\gView.Data.Joins.UI.dll");
+                Assembly uiAssembly = Assembly.LoadFrom(appPath + @"/gView.Data.Joins.UI.dll");
 
                 IJoinPropertyPanel p = uiAssembly.CreateInstance("gView.Framework.Data.Joins.UI.FeatureLayerJoinControl") as IJoinPropertyPanel;
                 if (p != null)

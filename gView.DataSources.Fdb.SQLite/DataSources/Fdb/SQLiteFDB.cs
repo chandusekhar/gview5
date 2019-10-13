@@ -414,10 +414,11 @@ namespace gView.DataSources.Fdb.SQLite
                             command.Parameters.Clear();
                             if (feature.Shape != null)
                             {
-                                GeometryDef.VerifyGeometryType(feature.Shape, fClass);
+                                var shape = fClass.ConvertTo(feature.Shape);
+                                GeometryDef.VerifyGeometryType(shape, fClass);
 
                                 BinaryWriter writer = new BinaryWriter(new MemoryStream());
-                                feature.Shape.Serialize(writer, fClass);
+                                shape.Serialize(writer, fClass);
 
                                 byte[] geometry = new byte[writer.BaseStream.Length];
                                 writer.BaseStream.Position = 0;
@@ -648,10 +649,11 @@ namespace gView.DataSources.Fdb.SQLite
                             command.Parameters.Clear();
                             if (feature.Shape != null)
                             {
-                                GeometryDef.VerifyGeometryType(feature.Shape, fClass);
+                                var shape = fClass.ConvertTo(feature.Shape);
+                                GeometryDef.VerifyGeometryType(shape, fClass);
 
                                 BinaryWriter writer = new BinaryWriter(new MemoryStream());
-                                feature.Shape.Serialize(writer, fClass);
+                                shape.Serialize(writer, fClass);
 
                                 byte[] geometry = new byte[writer.BaseStream.Length];
                                 writer.BaseStream.Position = 0;
@@ -976,7 +978,7 @@ namespace gView.DataSources.Fdb.SQLite
                 ISpatialReference filterSRef = ((ISpatialFilter)filter).FilterSpatialReference;
                 if (filterSRef != null && !filterSRef.Equals(fc.SpatialReference))
                 {
-                    sFilter.Geometry = GeometricTransformer.Transform2D(((ISpatialFilter)filter).Geometry, filterSRef, fc.SpatialReference);
+                    sFilter.Geometry = GeometricTransformerFactory.Transform2D(((ISpatialFilter)filter).Geometry, filterSRef, fc.SpatialReference);
                     if (sFilter.SpatialRelation == spatialRelation.SpatialRelationMapEnvelopeIntersects)
                     {
                         sFilter.Geometry = sFilter.Geometry.Envelope;
@@ -1017,7 +1019,7 @@ namespace gView.DataSources.Fdb.SQLite
                 }
             }
             return
-                await SQLiteFDBFeatureCursor.Create(_conn.ConnectionString, sql, where, filter.OrderBy, NIDs, sFilter, fc,
+                await SQLiteFDBFeatureCursor.Create(_conn.ConnectionString, sql, where, filter.OrderBy, filter.Limit, filter.BeginRecord, NIDs, sFilter, fc,
                 ((filter != null) ? filter.FeatureSpatialReference : null));
         }
 
@@ -1925,6 +1927,7 @@ namespace gView.DataSources.Fdb.SQLite
             //Envelope _queryEnvelope;
             ISpatialFilter _spatialFilter = null;
             IGeometryDef _geomDef;
+            int _limit = 0, _beginRecord = 0;
 
             private SQLiteFDBFeatureCursor(IGeometryDef geomDef, ISpatialReference toSRef) :
                 base((geomDef != null) ? geomDef.SpatialReference : null, toSRef)
@@ -1932,7 +1935,7 @@ namespace gView.DataSources.Fdb.SQLite
                 
             }
 
-            async static public Task<IFeatureCursor> Create(string connString, string sql, string where, string orderby, List<long> nids, ISpatialFilter filter, IGeometryDef geomDef, ISpatialReference toSRef)
+            async static public Task<IFeatureCursor> Create(string connString, string sql, string where, string orderby, int limit, int beginRecord, List<long> nids, ISpatialFilter filter, IGeometryDef geomDef, ISpatialReference toSRef)
             {
                 var cursor = new SQLiteFDBFeatureCursor(geomDef, toSRef);
 
@@ -1942,7 +1945,8 @@ namespace gView.DataSources.Fdb.SQLite
                     cursor._sql = sql;
                     await cursor._connection.OpenAsync();
                     cursor._geomDef = geomDef;
-
+                    cursor._limit = limit;
+                    cursor._beginRecord = beginRecord;
 
                     cursor._where = where;
                     cursor._orderby = orderby;
@@ -2043,10 +2047,13 @@ namespace gView.DataSources.Fdb.SQLite
                 _nid_pos++;
                 _readerCommand = new SQLiteCommand(_sql +
                                                         where +
-                                                        ((_orderby != String.Empty) ? " ORDER BY " + _orderby : ""),
+                                                        (!String.IsNullOrWhiteSpace(_orderby) ? " ORDER BY " + _orderby : "") +
+                                                        (_limit > 0 ? " LIMIT " + _limit : "") +
+                                                        (_beginRecord > 0 && _limit > 0 ? " OFFSET " + _beginRecord : ""),
                                                         _connection);
                 
-                    if (parameter != null) _readerCommand.Parameters.Add(parameter);
+
+                if (parameter != null) _readerCommand.Parameters.Add(parameter);
                 if (parameter2 != null) _readerCommand.Parameters.Add(parameter2);
 
                 _readerCommand.Prepare();

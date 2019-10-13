@@ -114,6 +114,15 @@ namespace gView.Interoperability.GeoServices.Request
                 _exportMap = JsonConvert.DeserializeObject<JsonExportMap>(context.ServiceRequest.Request);
                 using (var serviceMap = await context.CreateServiceMapInstance())
                 {
+                    #region SpatialReference
+
+                    if(!String.IsNullOrWhiteSpace(_exportMap.BBoxSRef))
+                    {
+                        serviceMap.Display.SpatialReference = SRef(_exportMap.BBoxSRef);
+                    }
+
+                    #endregion
+
                     #region Display
 
                     serviceMap.Display.dpi = _exportMap.Dpi;
@@ -122,7 +131,13 @@ namespace gView.Interoperability.GeoServices.Request
                     serviceMap.Display.iWidth = size[0];
                     serviceMap.Display.iHeight = size[1];
 
+                    if (_exportMap.Rotation != 0.0)
+                    {
+                        serviceMap.Display.DisplayTransformation.DisplayRotation = _exportMap.Rotation;
+                    }
+
                     var bbox = _exportMap.BBox.ToBBox();
+
                     serviceMap.Display.ZoomTo(new Envelope(bbox[0], bbox[1], bbox[2], bbox[3]));
 
                     #endregion
@@ -384,6 +399,11 @@ namespace gView.Interoperability.GeoServices.Request
                             var jsonGeometry = JsonConvert.DeserializeObject<Rest.Json.Features.Geometry.JsonGeometry>(query.Geometry);
                             ((SpatialFilter)filter).Geometry = jsonGeometry.ToGeometry();
                             ((SpatialFilter)filter).FilterSpatialReference = SRef(query.InSRef);
+                        }
+                        else if(!String.IsNullOrWhiteSpace(query.ObjectIds))
+                        {
+                            filter = new RowIDFilter(tableClass.IDFieldName,
+                                query.ObjectIds.Split(',').Select(id => int.Parse(id)).ToList());
                         }
                         else
                         {

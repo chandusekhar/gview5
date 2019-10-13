@@ -36,8 +36,8 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.Drawing.Common, Version=4.0.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Drawing.Common.4.5.1\lib\net461\System.Drawing.Common.dll</HintPath>
+    <Reference Include="System.Drawing.Common, Version=4.0.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Drawing.Common.4.6.0-preview6.19303.8\lib\net461\System.Drawing.Common.dll</HintPath>
     </Reference>
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Windows.Forms" />
@@ -79,7 +79,7 @@
     <Compile Include="Plugins\MapTools\Buttons.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Plugins\MapTools\Clipborad.cs" />
+    <Compile Include="Plugins\MapTools\Clipboard.cs" />
     <Compile Include="Plugins\MapTools\CloneLayer.cs" />
     <Compile Include="Plugins\MapTools\ContextMenuItems.cs" />
     <Compile Include="Plugins\MapTools\Controls\CoordControl.cs">
@@ -266,7 +266,7 @@
     <EmbeddedResource Include="Plugins\MapTools\Controls\MapOptionsControl.resx">
       <DependentUpon>MapOptionsControl.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Plugins\MapTools\Controls\SelectionEnvironmentControl.de.resx">
+    <EmbeddedResource Include="Plugins\MapTools\Controls\SelectionEnvironmentControl.de-DE.resx">
       <DependentUpon>SelectionEnvironmentControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Plugins\MapTools\Controls\SelectionEnvironmentControl.resx">
@@ -454,6 +454,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="Resources\add_data.png" />
   </ItemGroup>
   <ItemGroup>

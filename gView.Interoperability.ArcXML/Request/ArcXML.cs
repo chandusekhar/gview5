@@ -158,7 +158,7 @@ namespace gView.Interoperability.ArcXML
                             if (sRef == null && ServiceMap is IMap)
                             {
                                 sRef = ((IMap)ServiceMap).LayerDefaultSpatialReference;
-                            } ((Feature)row).Shape = GeometricTransformer.Transform2D(
+                            } ((Feature)row).Shape = GeometricTransformerFactory.Transform2D(
                                 shape,
                                 sRef,
                                 ServiceMap.Display.SpatialReference);
@@ -322,7 +322,7 @@ namespace gView.Interoperability.ArcXML
             await map.Render();
 
             string title = map.Name.Replace(",", "_").Replace("/", "_") + "_" + System.Guid.NewGuid().ToString("N") + _imageExtension;
-            if (await map.SaveImage(mapServer.OutputPath + @"\" + title, _imageFormat))
+            if (await map.SaveImage(mapServer.OutputPath + @"/" + title, _imageFormat))
             {
                 ret = response.IMAGE(mapServer.OutputPath, mapServer.OutputUrl, title, map.Display.Envelope);
             }
@@ -368,7 +368,7 @@ namespace gView.Interoperability.ArcXML
                 if (legend != null)
                 {
                     string title = map.Name.Replace(",", "_") + "_" + System.Guid.NewGuid().ToString("N") + ".png";
-                    legend.Save(mapServer.OutputPath + @"\" + title, System.Drawing.Imaging.ImageFormat.Png);
+                    legend.Save(mapServer.OutputPath + @"/" + title, System.Drawing.Imaging.ImageFormat.Png);
                     ret = response.LEGEND(mapServer.OutputPath, mapServer.OutputUrl, title, map.Display.Envelope);
                 }
             }
@@ -1512,7 +1512,7 @@ namespace gView.Interoperability.ArcXML
                                 continue;
                             }
 
-                            IGeometry geom = GeometricTransformer.Transform2D(((IFeatureLayer)element).FeatureClass.Envelope, ((IFeatureLayer)element).FeatureClass.SpatialReference, map.Display.SpatialReference);
+                            IGeometry geom = GeometricTransformerFactory.Transform2D(((IFeatureLayer)element).FeatureClass.Envelope, ((IFeatureLayer)element).FeatureClass.SpatialReference, map.Display.SpatialReference);
                             if (geom != null)
                             {
                                 env = geom.Envelope;
@@ -1525,7 +1525,7 @@ namespace gView.Interoperability.ArcXML
                                 continue;
                             }
 
-                            IGeometry geom = GeometricTransformer.Transform2D(((IRasterLayer)element).RasterClass.Polygon.Envelope, ((IRasterLayer)element).RasterClass.SpatialReference, map.Display.SpatialReference);
+                            IGeometry geom = GeometricTransformerFactory.Transform2D(((IRasterLayer)element).RasterClass.Polygon.Envelope, ((IRasterLayer)element).RasterClass.SpatialReference, map.Display.SpatialReference);
                             if (geom != null)
                             {
                                 env = geom.Envelope;
@@ -1538,7 +1538,7 @@ namespace gView.Interoperability.ArcXML
                                 continue;
                             }
 
-                            IGeometry geom = GeometricTransformer.Transform2D(((IWebServiceLayer)element).WebServiceClass.Envelope, ((IWebServiceLayer)element).WebServiceClass.SpatialReference, map.Display.SpatialReference);
+                            IGeometry geom = GeometricTransformerFactory.Transform2D(((IWebServiceLayer)element).WebServiceClass.Envelope, ((IWebServiceLayer)element).WebServiceClass.SpatialReference, map.Display.SpatialReference);
                             if (geom != null)
                             {
                                 env = geom.Envelope;
@@ -1686,7 +1686,7 @@ namespace gView.Interoperability.ArcXML
                             }
                             if (envelope)
                             {
-                                IGeometry geom = GeometricTransformer.Transform2D(fClass.Envelope, fClass.SpatialReference, map.Display.SpatialReference);
+                                IGeometry geom = GeometricTransformerFactory.Transform2D(fClass.Envelope, fClass.SpatialReference, map.Display.SpatialReference);
                                 if (geom != null)
                                 {
                                     ENVELOPE(xWriter, geom.Envelope);
@@ -1803,7 +1803,7 @@ namespace gView.Interoperability.ArcXML
 
                         if (envelope && rLayer.RasterClass.Polygon != null)
                         {
-                            IGeometry geom = GeometricTransformer.Transform2D(rLayer.RasterClass.Polygon.Envelope, rLayer.RasterClass.SpatialReference, map.Display.SpatialReference);
+                            IGeometry geom = GeometricTransformerFactory.Transform2D(rLayer.RasterClass.Polygon.Envelope, rLayer.RasterClass.SpatialReference, map.Display.SpatialReference);
                             if (geom != null)
                             {
                                 ENVELOPE(xWriter, geom.Envelope);
@@ -1965,7 +1965,7 @@ namespace gView.Interoperability.ArcXML
             xWriter.WriteStartElement("IMAGE");
             ENVELOPE(xWriter, envelope);
             xWriter.WriteStartElement("OUTPUT");
-            xWriter.WriteAttributeString("file", outputPath + @"\" + Title);
+            xWriter.WriteAttributeString("file", outputPath + @"/" + Title);
             xWriter.WriteAttributeString("url", outputUrl + "/" + Title);
             xWriter.WriteEndElement();  // OUTPUT
 
@@ -1997,7 +1997,7 @@ namespace gView.Interoperability.ArcXML
             xWriter.WriteStartElement("IMAGE");
             ENVELOPE(xWriter, envelope);
             xWriter.WriteStartElement("LEGEND");
-            xWriter.WriteAttributeString("file", outputPath + @"\" + Title);
+            xWriter.WriteAttributeString("file", outputPath + @"/" + Title);
             xWriter.WriteAttributeString("url", outputUrl + "/" + Title);
             xWriter.WriteEndElement();  // OUTPUT
 

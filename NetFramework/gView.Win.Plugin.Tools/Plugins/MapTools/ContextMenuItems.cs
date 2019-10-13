@@ -100,7 +100,7 @@ namespace gView.Plugins.MapTools
 
         public object Image
         {
-            get { return global::gView.Win.Plugins.Tools.Properties.Resources.import; }
+            get { return gView.Win.Plugin.Tools.Properties.Resources.import; }
         }
 
         public int SortOrder
@@ -155,7 +155,7 @@ namespace gView.Plugins.MapTools
                 IEnvelope envelope = ((IFeatureLayer)element).FeatureClass.Envelope;
                 if (((IFeatureLayer)element).FeatureClass.SpatialReference != null && !((IFeatureLayer)element).FeatureClass.SpatialReference.Equals(_doc.FocusMap.Display.SpatialReference))
                 {
-                    IGeometry geom = GeometricTransformer.Transform2D(envelope, ((IFeatureLayer)element).FeatureClass.SpatialReference, _doc.FocusMap.Display.SpatialReference);
+                    IGeometry geom = GeometricTransformerFactory.Transform2D(envelope, ((IFeatureLayer)element).FeatureClass.SpatialReference, _doc.FocusMap.Display.SpatialReference);
                     if (geom == null)
                         return Task.FromResult(true);
 
@@ -168,7 +168,7 @@ namespace gView.Plugins.MapTools
                 IEnvelope envelope = ((IRasterLayer)element).RasterClass.Polygon.Envelope;
                 if (((IRasterLayer)element).RasterClass.SpatialReference != null && !((IRasterLayer)element).RasterClass.SpatialReference.Equals(_doc.FocusMap.Display.SpatialReference))
                 {
-                    IGeometry geom = GeometricTransformer.Transform2D(envelope, ((IRasterLayer)element).RasterClass.SpatialReference, _doc.FocusMap.Display.SpatialReference);
+                    IGeometry geom = GeometricTransformerFactory.Transform2D(envelope, ((IRasterLayer)element).RasterClass.SpatialReference, _doc.FocusMap.Display.SpatialReference);
                     if (geom == null)
                         return Task.FromResult(true);
 
@@ -181,7 +181,7 @@ namespace gView.Plugins.MapTools
                 IEnvelope envelope = ((IWebServiceLayer)element).WebServiceClass.Envelope;
                 if (((IWebServiceLayer)element).WebServiceClass.SpatialReference != null && !((IWebServiceLayer)element).WebServiceClass.SpatialReference.Equals(_doc.FocusMap.Display.SpatialReference))
                 {
-                    IGeometry geom = GeometricTransformer.Transform2D(envelope, ((IWebServiceLayer)element).WebServiceClass.SpatialReference, _doc.FocusMap.Display.SpatialReference);
+                    IGeometry geom = GeometricTransformerFactory.Transform2D(envelope, ((IWebServiceLayer)element).WebServiceClass.SpatialReference, _doc.FocusMap.Display.SpatialReference);
                     if (geom == null)
                         return Task.FromResult(true);
 
@@ -257,7 +257,7 @@ namespace gView.Plugins.MapTools
 
         public object Image
         {
-            get { return gView.Win.Plugins.Tools.Properties.Resources.document_properties; }
+            get { return gView.Win.Plugin.Tools.Properties.Resources.document_properties; }
         }
 
         #endregion
@@ -321,7 +321,7 @@ namespace gView.Plugins.MapTools
 
         public object Image
         {
-            get { return global::gView.Win.Plugins.Tools.Properties.Resources.add_map; }
+            get { return gView.Win.Plugin.Tools.Properties.Resources.add_map; }
         }
 
         #endregion
@@ -379,7 +379,7 @@ namespace gView.Plugins.MapTools
 
         public object Image
         {
-            get { return global::gView.Win.Plugins.Tools.Properties.Resources.remove_map; }
+            get { return gView.Win.Plugin.Tools.Properties.Resources.remove_map; }
         }
 
         #endregion
@@ -442,7 +442,7 @@ namespace gView.Plugins.MapTools
 
         public object Image
         {
-            get { return global::gView.Win.Plugins.Tools.Properties.Resources.data_info; }
+            get { return gView.Win.Plugin.Tools.Properties.Resources.data_info; }
         }
 
         #endregion
@@ -517,7 +517,7 @@ namespace gView.Plugins.MapTools
 
         public object Image
         {
-            get { return global::gView.Win.Plugins.Tools.Properties.Resources.pie_diagram; }
+            get { return gView.Win.Plugin.Tools.Properties.Resources.pie_diagram; }
         }
 
         #endregion

@@ -6,6 +6,7 @@ using gView.Framework.IO;
 using System.Xml;
 using System.IO;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace gView.Framework.Db
 {
@@ -40,7 +41,7 @@ namespace gView.Framework.Db
                 try
                 {
                     XmlDocument doc = new XmlDocument();
-                    doc.Load(SystemVariables.ApplicationDirectory + @"\gview.db.ui.xml");
+                    doc.Load(SystemVariables.ApplicationDirectory + @"/gview.db.ui.xml");
 
                     XmlNode providerNode = doc.SelectSingleNode("//connectionStrings/provider[@id='" + _providerID + "']");
                     if (providerNode == null) return String.Empty;
@@ -191,7 +192,7 @@ namespace gView.Framework.Db
                 string appPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
                 
                 XmlDocument doc = new XmlDocument();
-                doc.Load(appPath + @"\gview.db.ui.xml");
+                doc.Load(appPath + @"/gview.db.ui.xml");
 
                 while (connectionString.EndsWith(";"))
                     connectionString = connectionString.Substring(0, connectionString.Length - 1).Trim();
@@ -282,6 +283,60 @@ namespace gView.Framework.Db
             }
             return String.Empty;
         }
+        #endregion
+
+        #region Static Members
+
+        static public string ParseNpgsqlConnectionString(string connectionString)
+        {
+            string[] knownKeywords = new string[]
+            {
+                "host",
+                "server",
+                "port",
+                "database",
+                "userid",
+                "username",
+                "password",
+
+                "pooling",
+                "minpoolsize",
+                "maxpoolsize",
+
+                "timeout",
+                "sslmode"
+            };
+
+            Dictionary<string, string> keywordTranslation = new Dictionary<string, string>()
+            {
+                { "server", "host" },
+                { "userid","username" }
+            };
+
+            StringBuilder sb = new StringBuilder();
+
+            foreach (var keywordParameter in connectionString.Split(';'))
+            {
+                if (keywordParameter.Contains("="))
+                {
+                    var keyword = keywordParameter.Substring(0, keywordParameter.IndexOf("=")).Trim().ToLower();
+                    if (knownKeywords.Contains(keyword))
+                    {
+                        string kp = keywordParameter;
+                        if(keywordTranslation.ContainsKey(keyword))
+                        {
+                            kp = keywordTranslation[keyword] + keywordParameter.Substring(keywordParameter.IndexOf("="));
+                        } 
+
+                        sb.Append(kp);
+                        sb.Append(";");
+                    }
+                }
+            }
+
+            return sb.ToString();
+        }
+
         #endregion
     }
 }

@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using  gView.Server.AppCode
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
@@ -7,6 +8,7 @@
     
     <environment include="Development">
         <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+        <link rel="stylesheet" href="~/lib/webportal-layout/webportal-layout.css" />
         <link rel="stylesheet" href="~/css/site.css" />
     </environment>
     <environment exclude="Development">
@@ -17,8 +19,10 @@
     </environment>
 </head>
 <body>
-    <nav class="navbar navbar-inverse navbar-fixed-top">
-        <div class="container">
+    @{
+        var username = gView.Server.AppCode.BaseController.LoginUsername(this.Context.Request);
+    }
+    <nav class="webportal-layout-header navbar navbar-inverse navbar-fixed-top">
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
                     <span class="sr-only">Toggle navigation</span>
@@ -27,37 +31,38 @@
                     <span class="icon-bar"></span>
                 </button>
                 <a asp-area="" asp-controller="Home" asp-action="Index" class="navbar-brand">
-                    <div class="gview-header-brand"></div>
+                    <div class="gview-header-brand">gView Server</div>
                 </a>
             </div>
-            <div class="navbar-collapse collapse">
+            @*<div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
                     <partial name="@(ViewData["mainMenuItems"] ?? "_mainMenuItemsPartial")" />
                 </ul>
-            </div>
-            <div class="login-button">
-                @{ var username = gView.Server.AppCode.BaseController.LoginUsername(this.Context.Request); }
-                @if (String.IsNullOrWhiteSpace(username))
-                {
-                <a asp-area="" asp-controller="Token" asp-action="Login">Login</a>
-                }
-                else
-                {
-                <a asp-area="" asp-controller="Token" asp-action="Logout">Logout: @(username)</a>
-                }
-            </div>
-        </div>
+            </div>*@
     </nav>
 
     <partial name="_CookieConsentPartial" />
 
-    <div class="container body-content">
-        @RenderBody()
+    <div class="webportal-layout-container page-has-header page-has-footer">
+        <partial name="_portalSidebarPartial" />
+        <div class="webportal-layout-main">
+            <div class="webportal-layout-main-container">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+
+    <div class="webportal-layout-footer">
+        <div class="version">
+            Version: @gView.Framework.system.SystemInfo.Version.ToString()
+        </div>
     </div>
 
     <environment include="Development">
         <script src="~/lib/jquery/dist/jquery.js"></script>
         <script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
+        <script src="~/lib/bootbox.js/bootbox.js"></script>
+        <script src="~/lib/webportal-layout/webportal-layout.js"></script>
         <script src="~/js/site.js" asp-append-version="true"></script>
     </environment>
     <environment exclude="Development">
@@ -73,10 +78,17 @@
                 crossorigin="anonymous"
                 integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa">
         </script>
+        <script src="~/lib/bootbox.js/bootbox.min.js"></script>
+        <script src="~/lib/webportal-layout/webportal-layout.js"></script>
         <script src="~/js/site.min.js" asp-append-version="true"></script>
     </environment>
 
-    @RenderSection("Scripts", required: false);
+    @RenderSection("Scripts", required: false)
 
+    <script type="text/javascript">
+        (function () {
+            window.gview.server.setRootUrl('@(gView.Server.AppCode.InternetMapServer.AppRootUrl(this.Context.Request))')
+        })();
+    </script>
 </body>
 </html>

@@ -1,10 +1,13 @@
-﻿@{
+﻿@using gView.Server.AppCode
+@{
     ViewData["Title"] = "Home Page";
+    var username = gView.Server.AppCode.BaseController.LoginUsername(this.Context.Request);
+    var isManageUser = gView.Server.AppCode.BaseController.IsManageUser(this.Context.Request);
 }
 
 <div>
     <div class="main-logo">
-        <div class="text">gView 5 Server</div>
+        <div class="text">gView Server</div>
     </div>
     <div class="main-nav-panels">
         <a class="main-nav-panel browse" asp-area="" asp-controller="BrowseServices" asp-action="Index">
@@ -13,8 +16,12 @@
         <a class="main-nav-panel geoservices" href="@(gView.Server.AppCode.InternetMapServer.AppRootUrl(this.Context.Request))/geoservices/rest/services">
             <div class="text">GeoServices (REST)</div>
         </a>
-        <a class="main-nav-panel manage" asp-area="" asp-controller="Manage" asp-action="Index">
+        @if (isManageUser || (Globals.AllowFormsLogin && (isManageUser == true || String.IsNullOrWhiteSpace(username))))
+        {
+        var hasManagerLogin = gView.Server.AppCode.BaseController.HasManagerLogin();
+        <a class="main-nav-panel manage @(!hasManagerLogin ? "required":"")" asp-area="" asp-controller="Manage" asp-action="Index">
             <div class="text">Manage</div>
         </a>
+        }
     </div>
 </div>

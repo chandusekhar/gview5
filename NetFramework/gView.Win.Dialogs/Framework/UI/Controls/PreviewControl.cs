@@ -1,16 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Text;
-using System.Windows.Forms;
-using gView.Framework.UI;
 using gView.Framework.Carto;
 using gView.Framework.Data;
 using gView.Framework.system;
-using gView.Explorer.UI;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace gView.Framework.UI.Controls
 {
@@ -31,7 +26,7 @@ namespace gView.Framework.UI.Controls
 
         #region IExplorerTabPage Members
 
-        public new Control Control
+        public Control Control
         {
             get { return this; }
         }
@@ -60,138 +55,206 @@ namespace gView.Framework.UI.Controls
                 ITool identify = compMan.CreateInstance(KnownObjects.Tools_Identify) as ITool;
                 ITool queryCombo = compMan.CreateInstance(KnownObjects.Tools_QueryThemeCombo) as ITool;
 
-                if (zoomin != null) zoomin.OnCreate(_mapDocument);
-                if (zoomout != null) zoomout.OnCreate(_mapDocument);
-                if (smartNav != null) smartNav.OnCreate(_mapDocument);
-                if (pan != null) pan.OnCreate(_mapDocument);
+                if (zoomin != null)
+                {
+                    zoomin.OnCreate(_mapDocument);
+                }
+
+                if (zoomout != null)
+                {
+                    zoomout.OnCreate(_mapDocument);
+                }
+
+                if (smartNav != null)
+                {
+                    smartNav.OnCreate(_mapDocument);
+                }
+
+                if (pan != null)
+                {
+                    pan.OnCreate(_mapDocument);
+                }
+
                 if (identify != null)
                 {
                     identify.OnCreate(_mapDocument);
                     identify.OnCreate(this);
                 }
-                if (queryCombo != null) queryCombo.OnCreate(_mapDocument);
+                if (queryCombo != null)
+                {
+                    queryCombo.OnCreate(_mapDocument);
+                }
                 //if (zoomextent != null) zoomextent.OnCreate(_mapDocument);
                 //if (toc != null) toc.OnCreate(_mapDocument);
 
-                if (zoomin != null) toolStrip.Items.Add(new ToolButton(zoomin));
-                if (zoomout != null) toolStrip.Items.Add(new ToolButton(zoomout));
-                if (smartNav != null) toolStrip.Items.Add(_activeToolButton = new ToolButton(smartNav));
-                if (pan != null) toolStrip.Items.Add(new ToolButton(pan));
+                if (zoomin != null)
+                {
+                    toolStrip.Items.Add(new ToolButton(zoomin));
+                }
+
+                if (zoomout != null)
+                {
+                    toolStrip.Items.Add(new ToolButton(zoomout));
+                }
+
+                if (smartNav != null)
+                {
+                    toolStrip.Items.Add(_activeToolButton = new ToolButton(smartNav));
+                }
+
+                if (pan != null)
+                {
+                    toolStrip.Items.Add(new ToolButton(pan));
+                }
                 //if(zoomextent!=null) toolStrip.Items.Add(new ToolButton(zoomextent));
                 //if(toc!=null) toolStrip.Items.Add(new ToolButton(toc));
-                if (identify != null) toolStrip.Items.Add(new ToolButton(identify));
-                if (queryCombo is IToolItem) toolStrip.Items.Add(((IToolItem)queryCombo).ToolItem);
+                if (identify != null)
+                {
+                    toolStrip.Items.Add(new ToolButton(identify));
+                }
 
-                if (zoomin != null) _tools.Add(zoomin);
-                if (zoomout != null) _tools.Add(zoomout);
-                if (smartNav != null) _tools.Add(smartNav);
-                if (pan != null) _tools.Add(pan);
+                if (queryCombo is IToolItem)
+                {
+                    toolStrip.Items.Add(((IToolItem)queryCombo).ToolItem);
+                }
+
+                if (zoomin != null)
+                {
+                    _tools.Add(zoomin);
+                }
+
+                if (zoomout != null)
+                {
+                    _tools.Add(zoomout);
+                }
+
+                if (smartNav != null)
+                {
+                    _tools.Add(smartNav);
+                }
+
+                if (pan != null)
+                {
+                    _tools.Add(pan);
+                }
                 //if (zoomextent != null) _tools.Add(zoomextent);
                 //if (toc != null) _tools.Add(toc);
-                if (identify != null) _tools.Add(identify);
-                if (queryCombo != null) _tools.Add(queryCombo);
+                if (identify != null)
+                {
+                    _tools.Add(identify);
+                }
+
+                if (queryCombo != null)
+                {
+                    _tools.Add(queryCombo);
+                }
 
                 _activeToolButton.Checked = true;
                 mapView1.Map = _map;
-                _map.NewBitmap += new NewBitmapEvent(mapView1.NewBitmapCreated);
-                _map.DoRefreshMapView += new DoRefreshMapViewEvent(mapView1.MakeMapViewRefresh);
+
+                _map.NewBitmap += InvokeNewBitmapCreated;
+                _map.DoRefreshMapView += InvokeDoRefreshMapView;
+
                 mapView1.Tool = _activeToolButton.Tool;
             }
         }
 
+        private void InvokeDoRefreshMapView()
+        {
+            mapView1.MakeMapViewRefresh();
+            
+        }
+
+        private void InvokeNewBitmapCreated(Image image)
+        {
+            mapView1.NewBitmapCreated(image);
+        }
+
         async public Task<bool> OnShow()
         {
-            if (_exObjectInvokeRequired)
-                await InkokeSetExplorerObject();
-            //if (this.InvokeRequired)
-            //{
-            //    this.Invoke(new MethodInvoker(() => { OnShow(); }));
-            //}
-            //else
+            // Starts Refresh in the background, do NOT await!!!! Otherwise it blocks UI
+            Task.Run(async () =>
             {
-                await mapView1.RefreshMap(DrawPhase.Geography);
-            }
+                if (_exObjectInvokeRequired)
+                {
+                    await InvokeSetExplorerObject();
+                }
 
+                await Task.Delay(100);
+                mapView1.RefreshMap(DrawPhase.Geography);
+            });
             return true;
+            //mapView1.RefreshMap(DrawPhase.Geography);
+            //return true;
         }
 
         public void OnHide()
         {
-            if (this.InvokeRequired)
-            {
-                this.Invoke(new MethodInvoker(() => { OnHide(); }));
-            }
-            else
-            {
-                mapView1.CancelDrawing(DrawPhase.All);
-            }
+            mapView1.CancelDrawing(DrawPhase.All);
         }
 
-        async private Task InkokeSetExplorerObject()
+        async private Task InvokeSetExplorerObject()
         {
             _exObjectInvokeRequired = false;
 
-            //if (this.InvokeRequired)
-            //{
-            //    this.Invoke(new MethodInvoker(() => { InkokeSetExplorerObject(); }));
-            //}
-            //else
+            mapView1.CancelDrawing(DrawPhase.All);
+            foreach (IDatasetElement element in _map.MapElements)
             {
-                mapView1.CancelDrawing(DrawPhase.All);
-                foreach (IDatasetElement element in _map.MapElements)
+                _map.RemoveLayer(element as ILayer);
+            }
+
+            if (_exObject != null)
+            {
+                var instance = await _exObject.GetInstanceAsync();
+                if (instance is IFeatureClass && ((IFeatureClass)instance).Envelope != null)
                 {
-                    _map.RemoveLayer(element as ILayer);
+                    mapView1.Map = _map;
+                    _map.AddLayer(LayerFactory.Create(instance as IClass));
+                    _map.Display.Limit = ((IFeatureClass)instance).Envelope;
+                    _map.Display.ZoomTo(((IFeatureClass)instance).Envelope);
                 }
-
-                if (_exObject != null)
+                else if (instance is IRasterClass && ((IRasterClass)instance).Polygon != null)
                 {
-                    var instance = await _exObject.GetInstanceAsync();
-                    if (instance is IFeatureClass && ((IFeatureClass)instance).Envelope != null)
+                    mapView1.Map = _map;
+                    _map.AddLayer(LayerFactory.Create(instance as IClass));
+                    _map.Display.Limit = ((IRasterClass)instance).Polygon.Envelope;
+                    _map.Display.ZoomTo(((IRasterClass)instance).Polygon.Envelope);
+                }
+                else if (instance is IWebServiceClass && ((IWebServiceClass)instance).Envelope != null)
+                {
+                    mapView1.Map = _map;
+                    _map.AddLayer(LayerFactory.Create(instance as IClass));
+                    _map.Display.Limit = ((IWebServiceClass)instance).Envelope;
+                    _map.Display.ZoomTo(((IWebServiceClass)instance).Envelope);
+                }
+                else if (instance is IFeatureDataset)
+                {
+                    mapView1.Map = _map;
+                    IFeatureDataset dataset = (IFeatureDataset)instance;
+                    foreach (IDatasetElement element in await dataset.Elements())
                     {
-                        mapView1.Map = _map;
-                        _map.AddLayer(LayerFactory.Create(instance as IClass));
-                        _map.Display.Limit = ((IFeatureClass)instance).Envelope;
-                        _map.Display.ZoomTo(((IFeatureClass)instance).Envelope);
-                    }
-                    else if (instance is IRasterClass && ((IRasterClass)instance).Polygon != null)
-                    {
-                        mapView1.Map = _map;
-                        _map.AddLayer(LayerFactory.Create(instance as IClass));
-                        _map.Display.Limit = ((IRasterClass)instance).Polygon.Envelope;
-                        _map.Display.ZoomTo(((IRasterClass)instance).Polygon.Envelope);
-                    }
-                    else if (instance is IWebServiceClass && ((IWebServiceClass)instance).Envelope != null)
-                    {
-                        mapView1.Map = _map;
-                        _map.AddLayer(LayerFactory.Create(instance as IClass));
-                        _map.Display.Limit = ((IWebServiceClass)instance).Envelope;
-                        _map.Display.ZoomTo(((IWebServiceClass)instance).Envelope);
-                    }
-                    else if (instance is IFeatureDataset)
-                    {
-                        mapView1.Map = _map;
-                        IFeatureDataset dataset = (IFeatureDataset)instance;
-                        foreach (IDatasetElement element in await dataset.Elements())
+                        ILayer layer = LayerFactory.Create(element.Class) as ILayer;
+                        if (layer == null)
                         {
-                            ILayer layer = LayerFactory.Create(element.Class) as ILayer;
-                            if (layer == null) continue;
-                            _map.AddLayer(layer);
+                            continue;
                         }
-                        _map.Display.Limit = await dataset.Envelope();
-                        _map.Display.ZoomTo(await dataset.Envelope());
+
+                        _map.AddLayer(layer);
                     }
-                    else if (instance is Map)
-                    {
-                        Map map = (Map)instance;
+                    _map.Display.Limit = await dataset.Envelope();
+                    _map.Display.ZoomTo(await dataset.Envelope());
+                }
+                else if (instance is Map)
+                {
+                    Map map = (Map)instance;
 
-                        map.NewBitmap -= new NewBitmapEvent(mapView1.NewBitmapCreated);
-                        map.DoRefreshMapView -= new DoRefreshMapViewEvent(mapView1.MakeMapViewRefresh);
+                    map.NewBitmap -= InvokeNewBitmapCreated;
+                    map.DoRefreshMapView -= InvokeDoRefreshMapView;
 
-                        map.NewBitmap += new NewBitmapEvent(mapView1.NewBitmapCreated);
-                        map.DoRefreshMapView += new DoRefreshMapViewEvent(mapView1.MakeMapViewRefresh);
+                    map.NewBitmap += InvokeNewBitmapCreated;
+                    map.DoRefreshMapView += InvokeDoRefreshMapView;
 
-                        mapView1.Map = (Map)instance;
-                    }
+                    mapView1.Map = (Map)instance;
                 }
             }
         }
@@ -202,7 +265,10 @@ namespace gView.Framework.UI.Controls
         }
         async public Task SetExplorerObjectAsync(IExplorerObject value)
         {
-            if (_exObject == value || _map == null) return;
+            if (_exObject == value || _map == null)
+            {
+                return;
+            }
 
             _exObject = value;
             _exObjectInvokeRequired = true;
@@ -211,14 +277,18 @@ namespace gView.Framework.UI.Controls
         public Task<bool> ShowWith(IExplorerObject exObject)
         {
             if (exObject == null)
+            {
                 return Task.FromResult(false);
+            }
 
             if (TypeHelper.Match(exObject.ObjectType, typeof(IFeatureClass)) ||
                 TypeHelper.Match(exObject.ObjectType, typeof(IRasterClass)) ||
                 TypeHelper.Match(exObject.ObjectType, typeof(IWebServiceClass)) ||
                 TypeHelper.Match(exObject.ObjectType, typeof(IFeatureDataset)) ||
                 TypeHelper.Match(exObject.ObjectType, typeof(Map)))
+            {
                 return Task.FromResult(true);
+            }
 
             return Task.FromResult(false);
         }
@@ -231,25 +301,24 @@ namespace gView.Framework.UI.Controls
         async public Task<bool> RefreshContents()
         {
             if (_exObjectInvokeRequired)
-                await InkokeSetExplorerObject();
-
-            //if (this.InvokeRequired)
-            //{
-            //    this.Invoke(new MethodInvoker(() => { RefreshContents(); }));
-            //}
-            //else
             {
-                mapView1.CancelDrawing(DrawPhase.All);
-                await mapView1.RefreshMap(DrawPhase.All);
+                await InvokeSetExplorerObject();
             }
+
+            mapView1.CancelDrawing(DrawPhase.All);
+            mapView1.RefreshMap(DrawPhase.All);
 
             return true;
         }
+
         #endregion
 
         private void toolStrip_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
-            if (!(e.ClickedItem is ToolButton) || _activeToolButton == e.ClickedItem) return;
+            if (!(e.ClickedItem is ToolButton) || _activeToolButton == e.ClickedItem)
+            {
+                return;
+            }
 
             _activeToolButton.Checked = false;
             _activeToolButton = (ToolButton)e.ClickedItem;
@@ -262,22 +331,17 @@ namespace gView.Framework.UI.Controls
         {
             foreach (ITool tool in _tools)
             {
-                if (PlugInManager.PlugInID(tool) == guid) return tool;
+                if (PlugInManager.PlugInID(tool) == guid)
+                {
+                    return tool;
+                }
             }
             return null;
         }
 
         async public Task RefreshMap()
         {
-            //if (this.InvokeRequired)
-            //{
-            //    this.Invoke(new MethodInvoker(() => { RefreshMap(); }));
-            //}
-            //else
-            {
-                if (mapView1 != null)
-                    await mapView1.RefreshMap(DrawPhase.All);
-            }
+            mapView1.RefreshMap(DrawPhase.All);
         }
 
         #region IOrder Members
@@ -290,20 +354,25 @@ namespace gView.Framework.UI.Controls
         #endregion
 
         #region mapView
+
         private delegate void DrawingLayerCallback(string layerName);
         private void DrawingLayer(string layerName)
         {
             if (statusStrip1.InvokeRequired)
             {
                 DrawingLayerCallback d = new DrawingLayerCallback(DrawingLayer);
-                this.Invoke(d, new object[] { layerName });
+                statusStrip1.Invoke(d, new object[] { layerName });
             }
             else
             {
                 if (layerName == "")
+                {
                     toolStripStatusLabel1.Text = "";
+                }
                 else
+                {
                     toolStripStatusLabel1.Text = "Drawing Layer " + layerName + "...";
+                }
             }
         }
 
@@ -318,7 +387,7 @@ namespace gView.Framework.UI.Controls
             if (statusStrip1.InvokeRequired)
             {
                 CursorMoveCallback d = new CursorMoveCallback(mapView1_CursorMove);
-                this.Invoke(d, new object[] { x, y, X, Y });
+                statusStrip1.Invoke(d, new object[] { x, y, X, Y });
             }
             else
             {
@@ -345,100 +414,5 @@ namespace gView.Framework.UI.Controls
         }
     }
 
-    [gView.Framework.system.RegisterPlugIn("62661EF5-2B98-4189-BFCD-7629476FA91C")]
-    public class DataTablePage : IExplorerTabPage
-    {
-        gView.Framework.UI.Dialogs.FormDataTable _table = null;
-        IExplorerObject _exObject = null;
-
-        #region IExplorerTabPage Members
-
-        public Control Control
-        {
-            get
-            {
-                if (_table == null)
-                    _table = new gView.Framework.UI.Dialogs.FormDataTable(null);
-                _table.StartWorkerOnShown = false;
-                _table.ShowExtraButtons = false;
-
-                return _table;
-            }
-        }
-
-        public void OnCreate(object hook)
-        {
-        }
-
-        async public Task<bool> OnShow()
-        {
-            OnHide();
-            if (_exObject == null)
-                return false;
-
-            var instance = await _exObject.GetInstanceAsync();
-            if (instance is ITableClass && _table != null)
-            {
-                _table.TableClass = (ITableClass)instance;
-                _table.StartWorkerThread();
-            }
-
-            return true;
-        }
-        public void OnHide()
-        {
-            //MessageBox.Show("get hidden...");
-            if (_table != null)
-            {
-                _table.TableClass = null;
-            }
-        }
-
-        public IExplorerObject GetExplorerObject()
-        {
-            return _exObject;
-        }
-
-        async public Task SetExplorerObjectAsync(IExplorerObject value)
-        {
-            _exObject = value;
-            await OnShow();
-        }
-        
-
-        public Task<bool> ShowWith(IExplorerObject exObject)
-        {
-            if (exObject == null)
-                return Task.FromResult(false);
-            if (TypeHelper.Match(exObject.ObjectType, typeof(ITableClass)))
-            {
-                //if (TypeHelper.Match(exObject.ObjectType, typeof(INetworkClass)) &&
-                //   ((IFeatureClass)exObject.Object).GeometryType == gView.Framework.Geometry.geometryType.Network)
-                //    return false;
-
-                return Task.FromResult(true);
-            }
-            return Task.FromResult(false);
-        }
-
-        public string Title
-        {
-            get { return "Data Table"; }
-        }
-
-        public Task<bool> RefreshContents()
-        {
-            return Task.FromResult(true);
-        }
-        #endregion
-
-        #region IOrder Members
-
-        public int SortOrder
-        {
-            get { return 20; }
-        }
-
-        #endregion
-    }
+    
 }

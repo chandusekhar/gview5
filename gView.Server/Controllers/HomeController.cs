@@ -1,20 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using gView.Server.AppCode;
 using gView.Server.Models;
-using gView.Server.AppCode;
-using gView.Framework.system;
-using gView.MapServer;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Diagnostics;
 
 namespace gView.Server.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : BaseController
     {
         public IActionResult Index()
         {
+            var user = Globals.ExternalAuthService != null ?
+                Globals.ExternalAuthService.Perform(this.Request) :
+                null;
+
+            if (!String.IsNullOrWhiteSpace(user))
+            {
+                var loginManager = new LoginManager(Globals.LoginManagerRootPath);
+                var authToken = loginManager.CreateUserAuthTokenWithoutPasswordCheck(user);
+                if (authToken != null)
+                {
+                    base.SetAuthCookie(authToken);
+                }
+
+                return RedirectToAction("Index", "Home");
+            }
+
             return View();
         }
 

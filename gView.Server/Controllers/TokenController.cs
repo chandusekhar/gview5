@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using gView.Server.AppCode;
+﻿using gView.Server.AppCode;
 using gView.Server.Models;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace gView.Server.Controllers
 {
@@ -18,6 +15,11 @@ namespace gView.Server.Controllers
         [HttpGet]
         public IActionResult Login()
         {
+            if (Globals.AllowFormsLogin == false)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
             return View(new TokenLoginModel());
         }
 
@@ -26,11 +28,18 @@ namespace gView.Server.Controllers
         {
             try
             {
+                if (Globals.AllowFormsLogin == false)
+                {
+                    return RedirectToAction("Index", "Home");
+                }
+
                 var loginManager = new LoginManager(Globals.LoginManagerRootPath);
                 var authToken = loginManager.GetAuthToken(model.Username, model.Password);
 
                 if (authToken == null)
+                {
                     throw new Exception("Unknown user or password");
+                }
 
                 base.SetAuthCookie(authToken);
 

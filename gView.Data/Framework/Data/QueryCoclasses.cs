@@ -350,6 +350,8 @@ namespace gView.Framework.Data
             set;
         }
 
+        public double MapScale { get; set; }
+
         #endregion
 
         #region IClone4 Member
@@ -807,7 +809,7 @@ namespace gView.Framework.Data
             SpatialFilter pFilter = new SpatialFilter(filter);
             pFilter.FilterSpatialReference = to;
 
-            pFilter.Geometry = GeometricTransformer.Transform2D(
+            pFilter.Geometry = GeometricTransformerFactory.Transform2D(
                 filter.Geometry,
                 filter.FilterSpatialReference,
                 to);

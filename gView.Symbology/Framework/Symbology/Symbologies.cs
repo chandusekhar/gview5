@@ -1202,7 +1202,7 @@ namespace gView.Framework.Symbology
         public object PropertyPage(object initObject)
         {
             string appPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"\gView.Win.Symbology.UI.dll");
+            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"/gView.Win.Symbology.UI.dll");
 
             IPropertyPanel p = uiAssembly.CreateInstance("gView.Framework.Symbology.UI.PropertyForm_SimplePointSymbol") as IPropertyPanel;
             if (p != null)
@@ -1645,7 +1645,7 @@ namespace gView.Framework.Symbology
         public object PropertyPage(object initObject)
         {
             string appPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"\gView.Win.Symbology.UI.dll");
+            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"/gView.Win.Symbology.UI.dll");
 
             IPropertyPanel p = uiAssembly.CreateInstance("gView.Framework.Symbology.UI.PropertyForm_SimplePointSymbol") as IPropertyPanel;
             if (p != null)
@@ -1821,7 +1821,7 @@ namespace gView.Framework.Symbology
         public object PropertyPage(object initObject)
         {
             string appPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"\gView.Win.Symbology.UI.dll");
+            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"/gView.Win.Symbology.UI.dll");
 
             IPropertyPanel p = uiAssembly.CreateInstance("gView.Framework.Symbology.UI.PropertyForm_SimplePointSymbol") as IPropertyPanel;
             if (p != null)
@@ -1853,8 +1853,7 @@ namespace gView.Framework.Symbology
                         if (_image == null) _image = Image.FromFile(_filename);
                         display.GraphicsContext.DrawImage(
                                 _image,
-                                new Rectangle((int)x, (int)y,
-                                (int)_sizeX, (int)_sizeY),
+                                new Rectangle((int)x, (int)y, (int)_sizeX, (int)_sizeY),
                                 new Rectangle(0, 0, _image.Width, _image.Height),
                                 GraphicsUnit.Pixel);
 
@@ -2160,7 +2159,11 @@ namespace gView.Framework.Symbology
             if (this.DashStyle != DashStyle.Solid &&
                 this.Smoothingmode != SymbolSmoothing.None)
             {
-                Envelope dispEnvelope = new Envelope(display.Envelope);
+                IEnvelope dispEnvelope =
+                    display.DisplayTransformation != null ?
+                    new Envelope(display.DisplayTransformation.TransformedBounds(display)) :
+                    new Envelope(display.Envelope);
+
                 //dispEnvelope.Raise(75);
                 geometry = gView.Framework.SpatialAlgorithms.Clip.PerformClip(dispEnvelope, geometry);
                 if (geometry == null) return;
@@ -2239,7 +2242,7 @@ namespace gView.Framework.Symbology
         public object PropertyPage(object initObject)
         {
             string appPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"\gView.Win.Symbology.UI.dll");
+            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"/gView.Win.Symbology.UI.dll");
 
             IPropertyPanel p = uiAssembly.CreateInstance("gView.Framework.Symbology.UI.PropertyForm_SimpleLineSymbol") as IPropertyPanel;
             if (p != null)
@@ -2607,7 +2610,7 @@ namespace gView.Framework.Symbology
         public object PropertyPage(object initObject)
         {
             string appPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"\gView.Win.Symbology.UI.dll");
+            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"/gView.Win.Symbology.UI.dll");
 
             IPropertyPanel p = uiAssembly.CreateInstance("gView.Framework.Symbology.UI.PropertyForm_SimpleFillSymbol") as IPropertyPanel;
             if (p != null)
@@ -3096,7 +3099,7 @@ namespace gView.Framework.Symbology
         public object PropertyPage(object initObject)
         {
             string appPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"\gView.Win.Symbology.UI.dll");
+            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"/gView.Win.Symbology.UI.dll");
 
             IPropertyPanel p = uiAssembly.CreateInstance("gView.Framework.Symbology.UI.PropertyForm_SimpleFillSymbol") as IPropertyPanel;
             if (p != null)
@@ -3363,7 +3366,7 @@ namespace gView.Framework.Symbology
         #endregion
     }
 
-    [RegisterPlugIn("E043E059-47E9-42A0-ACF0-FB1012DC8AA2")]
+    [RegisterPlugInAttribute("E043E059-47E9-42A0-ACF0-FB1012DC8AA2")]
     public sealed class GradientFillSymbol : LegendItem, IFillSymbol, IPenColor, IPenDashStyle, IPenWidth, IPropertyPage
     {
         public enum GradientRectType { Feature = 0, Display = 1 }
@@ -3675,7 +3678,7 @@ namespace gView.Framework.Symbology
         public object PropertyPage(object initObject)
         {
             string appPath = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"\gView.Win.Symbology.UI.dll");
+            Assembly uiAssembly = Assembly.LoadFrom(appPath + @"/gView.Win.Symbology.UI.dll");
 
             IPropertyPanel p = uiAssembly.CreateInstance("gView.Framework.Symbology.UI.PropertyForm_SimpleFillSymbol") as IPropertyPanel;
             if (p != null)
