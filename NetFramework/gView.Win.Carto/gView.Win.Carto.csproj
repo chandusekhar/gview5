@@ -89,28 +89,31 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ControlzEx">
-      <Version>3.0.2.4</Version>
+      <Version>4.2.2</Version>
     </PackageReference>
     <PackageReference Include="Dirkster.AvalonDock">
-      <Version>3.5.4</Version>
+      <Version>3.6.2</Version>
     </PackageReference>
     <PackageReference Include="Dirkster.AvalonDock.Themes.Aero">
-      <Version>3.5.4</Version>
+      <Version>3.6.2</Version>
     </PackageReference>
     <PackageReference Include="Dirkster.AvalonDock.Themes.Metro">
-      <Version>3.5.4</Version>
+      <Version>3.6.2</Version>
     </PackageReference>
     <PackageReference Include="Dirkster.AvalonDock.Themes.VS2013">
-      <Version>3.5.4</Version>
+      <Version>3.6.2</Version>
     </PackageReference>
     <PackageReference Include="Fluent.Ribbon">
-      <Version>6.1.0.326</Version>
+      <Version>7.0.1</Version>
     </PackageReference>
     <PackageReference Include="Legacy2CPSWorkaround" Version="1.0.0">
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf">
+      <Version>1.1.19</Version>
+    </PackageReference>
     <PackageReference Include="System.Drawing.Common">
-      <Version>4.6.0-preview6.19303.8</Version>
+      <Version>4.7.0</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
@@ -355,13 +358,17 @@
       <Project>{68ff06ec-cebd-4ba4-a536-6c09d9714066}</Project>
       <Name>gView.Win.Globalisation</Name>
     </ProjectReference>
+    <ProjectReference Include="..\gView.Win.Interoperability.ArcXML.UI\gView.Win.Interoperability.ArcXML.UI.csproj">
+      <Project>{b2c2cdd4-875a-4e29-8bff-1faa93e65e13}</Project>
+      <Name>gView.Win.Interoperability.ArcXML.UI</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\gView.Win.Interoperability.GeoServices.UI\gView.Win.Interoperability.GeoServices.UI.csproj">
+      <Project>{d3c3bb05-095c-4f39-97c3-17e70d0d1773}</Project>
+      <Name>gView.Win.Interoperability.GeoServices.UI</Name>
+    </ProjectReference>
     <ProjectReference Include="..\gView.Win.Interoperability.OGC.UI\gView.Win.Interoperability.OGC.UI.csproj">
       <Project>{ed609e9d-4942-4426-bad1-8de67d23385a}</Project>
       <Name>gView.Win.Interoperability.OGC.UI</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\gView.Win.MapServer.Connector\gView.Win.MapServer.Connector.csproj">
-      <Project>{249e5894-40ca-4692-b876-9df3b1a9e481}</Project>
-      <Name>gView.Win.MapServer.Connector</Name>
     </ProjectReference>
     <ProjectReference Include="..\gView.Win.OGC.UI\gView.Win.OGC.UI.csproj">
       <Project>{fa5c7709-9cb5-4747-9302-1f108f9a3caf}</Project>

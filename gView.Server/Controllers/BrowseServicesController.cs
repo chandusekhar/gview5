@@ -6,6 +6,7 @@ using gView.Server.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -33,7 +34,11 @@ namespace gView.Server.Controllers
                     }
                 }
 
-                bool isPublisher = base.GetAuthToken().AuthType == AuthToken.AuthTypes.Manage;
+                var authToken = base.GetAuthToken();
+
+                bool isPublisher = authToken.AuthType == AuthToken.AuthTypes.Manage;
+                bool isManager = authToken.AuthType == AuthToken.AuthTypes.Manage;
+
                 if (!String.IsNullOrWhiteSpace(folder))
                 {
                     var folderService = InternetMapServer.MapServices
@@ -77,17 +82,16 @@ namespace gView.Server.Controllers
                     }
                 }
 
-
-
                 var model = new BrowseServicesIndexModel()
                 {
                     IsPublisher = isPublisher,
+                    IsManager = isManager,
                     Folder = folder,
                     Folders = folders.ToArray(),
                     Services = services.ToArray(),
 
                     ServiceName = serviceName,
-                    ErrorMessage = errorMessage
+                    Message = errorMessage
                 };
 
                 return View("Index", model);
@@ -172,6 +176,7 @@ namespace gView.Server.Controllers
             });
         }
 
+        [HttpPost]
         async public Task<IActionResult> AddService(string service, string folder)
         {
             folder = folder ?? String.Empty;
@@ -242,15 +247,50 @@ namespace gView.Server.Controllers
                     //    succeeded = true
                     //});
 
+                    //return await Index(folder, String.Empty, $"Success: Successfully published services { service.ServiceName() }");
                     return await Index(folder);
                 }
                 catch (MapServerException mse)
                 {
-                    return await Index(folder, service.ServiceName(), mse.Message);
+                    return await Index(folder, /*service.ServiceName()*/String.Empty, mse.Message);
+                }
+                catch (Exception ex)
+                {
+                    return await Index(folder, /*service.ServiceName()*/String.Empty, "Unknown error: " + ex.Message);
+                }
+            });
+        }
+
+        [HttpPost]
+        async public Task<IActionResult> CreateFolder(string newFolder, string folder)
+        {
+            folder = folder ?? String.Empty;
+
+            return await SecureMethodHandler(async (identity) =>
+            {
+                try
+                {
+                    if (!identity.IsAdministrator)
+                    {
+                        throw new MapServerException("Not allowed");
+                    }
+
+                    var di = new DirectoryInfo($"{InternetMapServer.ServicesPath}/{newFolder}");
+                    if(di.Exists)
+                    {
+                        throw new MapServerException($"Folder { newFolder } already exists");
+                    }
+
+                    di.Create();
+                    return await Index(folder);
+                }
+                catch (MapServerException mse)
+                {
+                    return await Index(folder, String.Empty, mse.Message);
                 }
                 catch (Exception)
                 {
-                    return await Index(folder, service.ServiceName(), "Unknown error");
+                    return await Index(folder, String.Empty, "Unknown error");
                 }
             });
         }

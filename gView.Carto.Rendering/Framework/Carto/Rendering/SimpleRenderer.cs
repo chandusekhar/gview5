@@ -287,7 +287,7 @@ namespace gView.Framework.Carto.Rendering
         {
             if (cancelTracker == null) cancelTracker = new CancelTracker();
 
-            if (_actualCartoMethod == CartographicMethod.SymbolOrder && cancelTracker.Continue)
+            if (_actualCartoMethod == CartographicMethod.SymbolOrder && _features != null && cancelTracker.Continue)
             {
                 ISymbolCollection sColl = (ISymbolCollection)_symbol;
                 foreach (ISymbolCollectionItem symbolItem in sColl.Symbols)
@@ -434,11 +434,11 @@ namespace gView.Framework.Carto.Rendering
         #endregion
 
         #region IClone2
-        public object Clone(IDisplay display)
+        public object Clone(CloneOptions options)
         {
             SimpleRenderer renderer = new SimpleRenderer();
             if (_symbol != null)
-                renderer._symbol = (ISymbol)_symbol.Clone(_useRefScale ? display : null);
+                renderer._symbol = (ISymbol)_symbol.Clone(_useRefScale ? options : null);
 
             renderer._symbolRotation = (SymbolRotation)_symbolRotation.Clone();
             renderer._rotate = _rotate;

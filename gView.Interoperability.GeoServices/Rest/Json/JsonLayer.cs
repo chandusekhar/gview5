@@ -59,6 +59,12 @@ namespace gView.Interoperability.GeoServices.Rest.Json
         [JsonProperty("capabilities")]
         public string Capabilities { get; set; }
 
+        [JsonProperty("description")]
+        public string Description { get; set; }
+
+        [JsonProperty("copyrightText")]
+        public string CopyrightText { get; set; }
+
         //[JsonIgnore]
         //public string FullName
         //{
@@ -88,6 +94,27 @@ namespace gView.Interoperability.GeoServices.Rest.Json
         //        return String.Empty;
         //    }
         //}
+
+        public geometryType GetGeometryType()
+        {
+            switch(GeometryType)
+            {
+                case "esriGeometryPoint":
+                    return geometryType.Point;
+                case "esriGeometryMultipoint":
+                    return geometryType.Multipoint;
+                case "esriGeometryPolyline":
+                    return geometryType.Polyline;
+                case "esriGeometryPolygon":
+                    return geometryType.Polygon;
+                case "esriGeometryBag":
+                    return geometryType.Aggregate;
+                case "esriGeometryEnvelope":
+                    return geometryType.Envelope;
+            }
+
+            return geometryType.Unknown;
+        }
 
         #region Static Members
 

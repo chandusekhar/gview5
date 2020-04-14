@@ -33,6 +33,7 @@ namespace gView.Framework.Carto
     public delegate void TOCChangedEvent(IMap sender);
     public delegate void NewExtentRenderedEvent(IMap sender, IEnvelope extent);
     public delegate void DrawingLayerFinishedEvent(IMap sender, ITimeEvent timeEvent);
+    public delegate void UserIntefaceEvent(IMap sender, bool lockUI);
 
     public interface IMap : IDisposable, IClone, IMetadata, IDataCopyright, IPersistableLoadAsync
     {
@@ -46,6 +47,7 @@ namespace gView.Framework.Carto
         event DrawingLayerFinishedEvent DrawingLayerFinished;
         event StartRefreshMapEvent StartRefreshMap;
         event EventHandler MapRenamed;
+        event UserIntefaceEvent OnUserInterface;
 
         void AddDataset(IDataset dataset, int order);
         void RemoveDataset(IDataset dataset);
@@ -65,6 +67,8 @@ namespace gView.Framework.Carto
         }
         IEnumerable<IDataset> Datasets { get; } 
         string Name { get; set; }
+
+        string Title { get; set; }
 
         Task<List<IDatasetElement>> Elements(string aliasname);
         List<IDatasetElement> MapElements { get; }
@@ -103,6 +107,12 @@ namespace gView.Framework.Carto
         bool HasErrorMessages { get; }
 
         void Compress();
+
+        string GetLayerDescription(int layerId);
+        void SetLayerDescription(int layerId, string description);
+
+        string GetLayerCopyrightText(int layerId);
+        void SetLayerCopyrightText(int layerId, string copyrightText);
     }
 
     /*
@@ -123,7 +133,7 @@ namespace gView.Framework.Carto
         event BeforeRenderLayersEvent BeforeRenderLayers;
 
         string Name { get; }
-
+        string Title { get; }
         IDisplay Display { get; }
         ITOC TOC { get; }
 
@@ -140,6 +150,16 @@ namespace gView.Framework.Carto
         float ScaleSymbolFactor { get; set; }
 
         T GetModule<T>();
+
+        string GetLayerDescription(int layerId);
+
+        string GetLayerCopyrightText(int layerId);
+
+        ISpatialReference LayerDefaultSpatialReference
+        {
+            get;
+            set;
+        }
     }
 
     public delegate void MapScaleChangedEvent(IDisplay sender);
@@ -284,6 +304,11 @@ namespace gView.Framework.Carto
         void Transform(IDisplay display, ref double x, ref double y);
         void InvTransform(IDisplay display, ref double x, ref double y);
         IEnvelope TransformedBounds(IDisplay display);
+    }
+
+    public interface IRefreshSequences
+    {
+        void RefreshSequences();
     }
 
     public interface IScreen

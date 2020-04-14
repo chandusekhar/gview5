@@ -38,7 +38,7 @@ namespace gView.Framework.Geometry
     {
         bool HasZ { get; }
         bool HasM { get; }
-        ISpatialReference SpatialReference { get; }
+        ISpatialReference SpatialReference { get;/* set;*/ }
         geometryType GeometryType { get; }
         //int DigitAccuracy { get; }
         //gView.Framework.Data.GeometryFieldType GeometryFieldType { get; }
@@ -198,6 +198,8 @@ namespace gView.Framework.Geometry
 
         IEnumerable<IRing> Rings { get; }
         IEnumerable<IHole> Holes { get; }
+
+        int TotalPointCount { get; }
 
         double Area { get; }
 

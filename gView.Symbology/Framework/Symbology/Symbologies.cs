@@ -1,23 +1,18 @@
-using System;
-using System.ComponentModel;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml;
-using gView.Framework;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Collections;
-using gView.Framework.Symbology;
 using gView.Framework.Carto;
 using gView.Framework.Geometry;
-using gView.Framework.UI;
 using gView.Framework.IO;
-using gView.Framework.system;
-using System.Reflection;
 using gView.Framework.Symbology.UI;
-using System.IO;
+using gView.Framework.system;
+using gView.Framework.UI;
 using gView.Symbology.Framework.Symbology.IO;
-using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Reflection;
+using System.Text;
+using System.Xml;
 
 namespace gView.Framework.Symbology
 {
@@ -67,7 +62,7 @@ namespace gView.Framework.Symbology
                 {
                     IPoint point = ring[p];
                     double x = point.X, y = point.Y;
-                    
+
                     display.World2Image(ref x, ref y);
 
                     //
@@ -91,7 +86,9 @@ namespace gView.Framework.Symbology
                             count++;
                         }
                         else
+                        {
                             first = false;
+                        }
                     }
                     o_x = (float)x;
                     o_y = (float)y;
@@ -127,7 +124,7 @@ namespace gView.Framework.Symbology
             //    return null;
 
             GraphicsPath gp = new GraphicsPath();
-            
+
             for (int r = 0; r < polyline.PathCount; r++)
             {
                 bool first = true;
@@ -165,7 +162,9 @@ namespace gView.Framework.Symbology
                             count++;
                         }
                         else
+                        {
                             first = false;
+                        }
                     }
                     o_x = (float)x;
                     o_y = (float)y;
@@ -331,7 +330,7 @@ namespace gView.Framework.Symbology
             return this;
         }
 
-        public object Clone(IDisplay display)
+        public object Clone(CloneOptions options)
         {
             return this;
         }
@@ -381,7 +380,7 @@ namespace gView.Framework.Symbology
     }
 
     [gView.Framework.system.RegisterPlugIn("062AD1EA-A93C-4c3c-8690-830E65DC6D91")]
-    public sealed class SymbolCollection : LegendItem, ISymbolCollection, ISymbol, ILabel, ISymbolRotation, ITextSymbol, IPenColor,IBrushColor,IFontColor
+    public sealed class SymbolCollection : LegendItem, ISymbolCollection, ISymbol, ILabel, ISymbolRotation, ITextSymbol, IPenColor, IBrushColor, IFontColor
     {
         private List<SymbolCollectionItem> _symbols;
 
@@ -402,7 +401,11 @@ namespace gView.Framework.Symbology
         }
         public void AddSymbol(ISymbol symbol, bool visible)
         {
-            if (!PlugInManager.IsPlugin(symbol)) return;
+            if (!PlugInManager.IsPlugin(symbol))
+            {
+                return;
+            }
+
             if (symbol is SymbolCollection)
             {
                 foreach (SymbolCollectionItem item in ((SymbolCollection)symbol).Symbols)
@@ -427,7 +430,10 @@ namespace gView.Framework.Symbology
                     break;
                 }
             }
-            if (symbolItem != null) _symbols.Remove(symbolItem);
+            if (symbolItem != null)
+            {
+                _symbols.Remove(symbolItem);
+            }
         }
 
         public void InsertBefore(ISymbol symbol, ISymbol before, bool visible)
@@ -456,7 +462,11 @@ namespace gView.Framework.Symbology
             int index = 0;
             foreach (SymbolCollectionItem item in _symbols)
             {
-                if (item.Symbol == symbol) return index;
+                if (item.Symbol == symbol)
+                {
+                    return index;
+                }
+
                 index++;
             }
             return -1;
@@ -502,7 +512,11 @@ namespace gView.Framework.Symbology
         {
             foreach (SymbolCollectionItem sSym in _symbols)
             {
-                if (sSym.Symbol == null) continue;
+                if (sSym.Symbol == null)
+                {
+                    continue;
+                }
+
                 sSym.Symbol.Release();
             }
             _symbols.Clear();
@@ -520,10 +534,35 @@ namespace gView.Framework.Symbology
         {
             foreach (SymbolCollectionItem sSym in _symbols)
             {
-                if (sSym.Symbol == null || !sSym.Visible) continue;
+                if (sSym.Symbol == null || !sSym.Visible)
+                {
+                    continue;
+                }
+
                 sSym.Symbol.Draw(display, geometry);
             }
         }
+
+        public void Draw(IDisplay display, IGeometry geometry, TextSymbolAlignment symbolAlignment)
+        {
+            foreach (SymbolCollectionItem sSym in _symbols)
+            {
+                if (sSym.Symbol == null || !sSym.Visible)
+                {
+                    continue;
+                }
+
+                if (sSym.Symbol is ITextSymbol)
+                {
+                    ((ITextSymbol)sSym.Symbol).Draw(display, geometry, symbolAlignment);
+                }
+                else
+                {
+                    sSym.Symbol.Draw(display, geometry);
+                }
+            }
+        }
+
         #endregion
 
         #region ILabel
@@ -533,7 +572,10 @@ namespace gView.Framework.Symbology
             {
                 foreach (SymbolCollectionItem item in _symbols)
                 {
-                    if (item.Symbol is ITextSymbol) return ((ITextSymbol)item.Symbol).Text;
+                    if (item.Symbol is ITextSymbol)
+                    {
+                        return ((ITextSymbol)item.Symbol).Text;
+                    }
                 }
                 return "";
             }
@@ -542,7 +584,9 @@ namespace gView.Framework.Symbology
                 foreach (SymbolCollectionItem item in _symbols)
                 {
                     if (item.Symbol is ITextSymbol)
+                    {
                         ((ITextSymbol)item.Symbol).Text = value;
+                    }
                 }
             }
         }
@@ -552,7 +596,10 @@ namespace gView.Framework.Symbology
             {
                 foreach (SymbolCollectionItem item in _symbols)
                 {
-                    if (item.Symbol is ITextSymbol) return ((ITextSymbol)item.Symbol).TextSymbolAlignment;
+                    if (item.Symbol is ITextSymbol)
+                    {
+                        return ((ITextSymbol)item.Symbol).TextSymbolAlignment;
+                    }
                 }
                 return TextSymbolAlignment.Center;
             }
@@ -561,7 +608,35 @@ namespace gView.Framework.Symbology
                 foreach (SymbolCollectionItem item in _symbols)
                 {
                     if (item.Symbol is ITextSymbol)
+                    {
                         ((ITextSymbol)item.Symbol).TextSymbolAlignment = value;
+                    }
+                }
+            }
+        }
+
+        [Browsable(false)]
+        public TextSymbolAlignment[] SecondaryTextSymbolAlignments
+        {
+            get
+            {
+                foreach (SymbolCollectionItem item in _symbols)
+                {
+                    if (item.Symbol is ITextSymbol)
+                    {
+                        return ((ITextSymbol)item.Symbol).SecondaryTextSymbolAlignments;
+                    }
+                }
+                return new TextSymbolAlignment[0];
+            }
+            set
+            {
+                foreach (SymbolCollectionItem item in _symbols)
+                {
+                    if (item.Symbol is ITextSymbol)
+                    {
+                        ((ITextSymbol)item.Symbol).SecondaryTextSymbolAlignments = value;
+                    }
                 }
             }
         }
@@ -570,12 +645,15 @@ namespace gView.Framework.Symbology
         {
             foreach (SymbolCollectionItem item in _symbols)
             {
-                if (item.Symbol is ILabel) return ((ILabel)item.Symbol).MeasureCharacterWidth(display);
+                if (item.Symbol is ILabel)
+                {
+                    return ((ILabel)item.Symbol).MeasureCharacterWidth(display);
+                }
             }
             return null;
         }
 
-        public List<IAnnotationPolygonCollision> AnnotationPolygon(IDisplay display, IGeometry geometry)
+        public List<IAnnotationPolygonCollision> AnnotationPolygon(IDisplay display, IGeometry geometry, TextSymbolAlignment symbolAlignment)
         {
             List<IAnnotationPolygonCollision> aPolygons = new List<IAnnotationPolygonCollision>();
 
@@ -583,12 +661,18 @@ namespace gView.Framework.Symbology
             {
                 if (item.Symbol is ILabel)
                 {
-                    List<IAnnotationPolygonCollision> pList = ((ILabel)item.Symbol).AnnotationPolygon(display, geometry);
-                    if (pList == null) continue;
+                    List<IAnnotationPolygonCollision> pList = ((ILabel)item.Symbol).AnnotationPolygon(display, geometry, symbolAlignment);
+                    if (pList == null)
+                    {
+                        continue;
+                    }
 
                     foreach (AnnotationPolygon aPolygon in pList)
                     {
-                        if (aPolygons != null) aPolygons.Add(aPolygon);
+                        if (aPolygons != null)
+                        {
+                            aPolygons.Add(aPolygon);
+                        }
                     }
                 }
             }
@@ -632,12 +716,12 @@ namespace gView.Framework.Symbology
         #endregion
 
         #region IClone2
-        public object Clone(IDisplay display)
+        public object Clone(CloneOptions options)
         {
             SymbolCollection collection = new SymbolCollection();
             foreach (SymbolCollectionItem sSym in _symbols)
             {
-                collection._symbols.Add(sSym.Clone(display));
+                collection._symbols.Add(sSym.Clone(options));
             }
             collection.LegendLabel = _legendLabel;
 
@@ -743,7 +827,9 @@ namespace gView.Framework.Symbology
                     foreach (SymbolCollectionItem item in _symbols)
                     {
                         if (item.Symbol != null)
+                        {
                             item.Symbol.SymbolSmothingMode = value;
+                        }
                     }
                 }
             }
@@ -762,12 +848,16 @@ namespace gView.Framework.Symbology
             set
             {
                 if (_symbols == null)
+                {
                     return;
+                }
 
                 foreach (SymbolCollectionItem item in _symbols)
                 {
                     if (item.Symbol is IPenColor)
+                    {
                         ((IPenColor)item.Symbol).PenColor = value;
+                    }
                 }
             }
         }
@@ -785,12 +875,16 @@ namespace gView.Framework.Symbology
             set
             {
                 if (_symbols == null)
+                {
                     return;
+                }
 
                 foreach (SymbolCollectionItem item in _symbols)
                 {
                     if (item.Symbol is IBrushColor)
+                    {
                         ((IBrushColor)item.Symbol).FillColor = value;
+                    }
                 }
             }
         }
@@ -808,12 +902,16 @@ namespace gView.Framework.Symbology
             set
             {
                 if (_symbols == null)
+                {
                     return;
+                }
 
                 foreach (SymbolCollectionItem item in _symbols)
                 {
                     if (item.Symbol is IFontColor)
+                    {
                         ((IFontColor)item.Symbol).FontColor = value;
+                    }
                 }
             }
         }
@@ -831,11 +929,11 @@ namespace gView.Framework.Symbology
             Symbol = symbol;
             Visible = visible;
         }
-        public SymbolCollectionItem Clone(IDisplay display)
+        public SymbolCollectionItem Clone(CloneOptions options)
         {
             if (Symbol != null)
             {
-                return new SymbolCollectionItem((ISymbol)Symbol.Clone(display), Visible);
+                return new SymbolCollectionItem((ISymbol)Symbol.Clone(options), Visible);
             }
             else
             {
@@ -855,7 +953,7 @@ namespace gView.Framework.Symbology
 
         public void Load(IPersistStream stream)
         {
-            Visible = (bool)stream.Load("visible");
+            Visible = (bool)stream.Load("visible", false);
             Symbol = (ISymbol)stream.Load("ISymbol");
         }
 
@@ -1021,9 +1119,15 @@ namespace gView.Framework.Symbology
                 {
                     case MarkerType.Circle:
                         if (_brush.Color != Color.Transparent)
+                        {
                             display.GraphicsContext.FillEllipse(_brush, x, y, _size, _size);
+                        }
+
                         if (_pen.Color != Color.Transparent)
+                        {
                             display.GraphicsContext.DrawEllipse(_pen, x, y, _size, _size);
+                        }
+
                         break;
                     case MarkerType.Triangle:
                         using (GraphicsPath gp = new GraphicsPath())
@@ -1034,16 +1138,27 @@ namespace gView.Framework.Symbology
                             gp.CloseFigure();
 
                             if (_brush.Color != Color.Transparent)
+                            {
                                 display.GraphicsContext.FillPath(_brush, gp);
+                            }
+
                             if (_pen.Color != Color.Transparent)
+                            {
                                 display.GraphicsContext.DrawPath(_pen, gp);
+                            }
                         }
                         break;
                     case MarkerType.Square:
                         if (_brush.Color != Color.Transparent)
+                        {
                             display.GraphicsContext.FillRectangle(_brush, x, y, _size, _size);
+                        }
+
                         if (_pen.Color != Color.Transparent)
+                        {
                             display.GraphicsContext.DrawRectangle(_pen, x, y, _size, _size);
+                        }
+
                         break;
                     case MarkerType.Cross:
                         float sw = _symbolWidth;
@@ -1060,9 +1175,14 @@ namespace gView.Framework.Symbology
                             gp2.CloseFigure();
 
                             if (_brush.Color != Color.Transparent && sw > 0.0)
+                            {
                                 display.GraphicsContext.FillPath(_brush, gp2);
+                            }
+
                             if (_pen.Color != Color.Transparent)
+                            {
                                 display.GraphicsContext.DrawPath(_pen, gp2);
+                            }
                         }
                         break;
                     case MarkerType.Star:
@@ -1081,9 +1201,14 @@ namespace gView.Framework.Symbology
                             gp3.CloseFigure();
 
                             if (_brush.Color != Color.Transparent)
+                            {
                                 display.GraphicsContext.FillPath(_brush, gp3);
+                            }
+
                             if (_pen.Color != Color.Transparent)
+                            {
                                 display.GraphicsContext.DrawPath(_pen, gp3);
+                            }
                         }
                         break;
                 }
@@ -1121,9 +1246,17 @@ namespace gView.Framework.Symbology
 
         public void Release()
         {
-            if (_brush != null) _brush.Dispose();
+            if (_brush != null)
+            {
+                _brush.Dispose();
+            }
+
             _brush = null;
-            if (_pen != null) _pen.Dispose();
+            if (_pen != null)
+            {
+                _pen.Dispose();
+            }
+
             _pen = null;
         }
 
@@ -1216,9 +1349,15 @@ namespace gView.Framework.Symbology
         #endregion
 
         #region IClone2
-        public object Clone(IDisplay display)
+        public object Clone(CloneOptions options)
         {
-            if (display == null) return Clone();
+            var display = options?.Display;
+
+            if (display == null)
+            {
+                return Clone();
+            }
+
             float fac = 1;
 
             if (display.refScale > 1)
@@ -1226,9 +1365,13 @@ namespace gView.Framework.Symbology
                 fac = ReferenceScaleHelper.RefscaleFactor(
                     (float)(display.refScale / display.mapScale),
                     this.SymbolSize, this.MinSymbolSize, this.MaxSymbolSize);
+                fac = options.RefScaleFactor(fac);
             }
+
             if (display.dpi != 96.0)
+            {
                 fac *= (float)(display.dpi / 96.0);
+            }
 
             SimplePointSymbol pSym = new SimplePointSymbol(_pen.Color, _pen.Width * fac, _brush.Color);
             pSym._size = Math.Max(_size * fac, 1f);
@@ -1238,6 +1381,10 @@ namespace gView.Framework.Symbology
             pSym.HorizontalOffset = HorizontalOffset * fac;
             pSym.VerticalOffset = VerticalOffset * fac;
             pSym.LegendLabel = _legendLabel;
+            pSym.Smoothingmode = this.Smoothingmode;
+
+            pSym.MaxSymbolSize = this.MaxSymbolSize;
+            pSym.MinSymbolSize = this.MinSymbolSize;
 
             return pSym;
         }
@@ -1267,12 +1414,19 @@ namespace gView.Framework.Symbology
         {
             get
             {
-                if (_brush != null) return _brush.Color;
+                if (_brush != null)
+                {
+                    return _brush.Color;
+                }
+
                 return Color.Transparent;
             }
             set
             {
-                if (_brush != null) _brush.Color = value;
+                if (_brush != null)
+                {
+                    _brush.Color = value;
+                }
             }
         }
 
@@ -1285,12 +1439,19 @@ namespace gView.Framework.Symbology
         {
             get
             {
-                if (_pen != null) return _pen.Color;
+                if (_pen != null)
+                {
+                    return _pen.Color;
+                }
+
                 return Color.Transparent;
             }
             set
             {
-                if (_pen != null) _pen.Color = value;
+                if (_pen != null)
+                {
+                    _pen.Color = value;
+                }
             }
         }
 
@@ -1302,12 +1463,19 @@ namespace gView.Framework.Symbology
         {
             get
             {
-                if (_pen != null) return _pen.Width;
+                if (_pen != null)
+                {
+                    return _pen.Width;
+                }
+
                 return 0f;
             }
             set
             {
-                if (_pen != null) _pen.Width = value;
+                if (_pen != null)
+                {
+                    _pen.Width = value;
+                }
             }
         }
 
@@ -1421,7 +1589,11 @@ namespace gView.Framework.Symbology
             get { return _font; }
             set
             {
-                if (_font != null) _font.Dispose();
+                if (_font != null)
+                {
+                    _font.Dispose();
+                }
+
                 _font = value;
             }
         }
@@ -1459,7 +1631,9 @@ namespace gView.Framework.Symbology
                     if (_angle != 0 || _rotation != 0)
                     {
                         if (_rotation != 0)
+                        {
                             SymbolTransformation.Transform(_angle + _rotation, _hOffset, _vOffset, out _xOffset, out _yOffset);
+                        }
 
                         double cos_a = Math.Cos(((double)(-_angle - _rotation)) / 180.0 * Math.PI);
                         double sin_a = Math.Sin(((double)(-_angle - _rotation)) / 180.0 * Math.PI);
@@ -1526,9 +1700,17 @@ namespace gView.Framework.Symbology
 
         public void Release()
         {
-            if (_brush != null) _brush.Dispose();
+            if (_brush != null)
+            {
+                _brush.Dispose();
+            }
+
             _brush = null;
-            if (_font != null) _font.Dispose();
+            if (_font != null)
+            {
+                _font.Dispose();
+            }
+
             _font = null;
         }
 
@@ -1553,7 +1735,7 @@ namespace gView.Framework.Symbology
             }
             else if (geometry is IMultiPoint)
             {
-                for (int i = 0, to=((IMultiPoint)geometry).PointCount; i < to; i++)
+                for (int i = 0, to = ((IMultiPoint)geometry).PointCount; i < to; i++)
                 {
                     IPoint p = ((IMultiPoint)geometry)[i];
                     Draw(display, p);
@@ -1582,7 +1764,11 @@ namespace gView.Framework.Symbology
                 XmlDocument doc = new XmlDocument();
                 doc.LoadXml(soap);
                 XmlNode sizeNode = doc.SelectSingleNode("//Size");
-                if (sizeNode != null) sizeNode.InnerText = sizeNode.InnerText.Replace(".", ",");
+                if (sizeNode != null)
+                {
+                    sizeNode.InnerText = sizeNode.InnerText.Replace(".", ",");
+                }
+
                 soap = doc.OuterXml;
                 //
                 //
@@ -1591,15 +1777,15 @@ namespace gView.Framework.Symbology
                 ms.Write(encoder.GetBytes(soap), 0, soap.Length);
                 ms.Position = 0;
                 SoapFormatter formatter = new SoapFormatter();
-                _font = (Font)formatter.Deserialize<Font>(ms);
+                _font = (Font)formatter.Deserialize<Font>(ms, stream, this, true);
             }
             catch { }
 
-            _char = (char)stream.Load("char");
-            _brush.Color = Color.FromArgb((int)stream.Load("color"));
-            HorizontalOffset = (float)stream.Load("x");
-            VerticalOffset = (float)stream.Load("y");
-            Angle = (float)stream.Load("a");
+            _char = (char)stream.Load("char", 'A');
+            _brush.Color = Color.FromArgb((int)stream.Load("color", Color.Black.ToArgb()));
+            HorizontalOffset = (float)stream.Load("x", 0f);
+            VerticalOffset = (float)stream.Load("y", 0f);
+            Angle = (float)stream.Load("a", 0f);
 
             this.MaxSymbolSize = (float)stream.Load("maxsymbolsize", 0f);
             this.MinSymbolSize = (float)stream.Load("minsymbolsize", 0f);
@@ -1659,18 +1845,47 @@ namespace gView.Framework.Symbology
         #endregion
 
         #region IClone2
-        public object Clone(IDisplay display)
+
+        public override object Clone()
         {
-            if (display == null) return Clone();
+            TrueTypeMarkerSymbol marker = Font != null && _brush != null ?
+                new TrueTypeMarkerSymbol(new Font(Font.Name, Font.Size, Font.Style), _brush.Color) :
+                new TrueTypeMarkerSymbol();
+
+            marker.Angle = Angle;
+            marker.HorizontalOffset = HorizontalOffset;
+            marker.VerticalOffset = VerticalOffset;
+
+            marker._char = _char;
+            marker.LegendLabel = _legendLabel;
+
+            marker.MaxSymbolSize = this.MaxSymbolSize;
+            marker.MinSymbolSize = this.MinSymbolSize;
+
+            return marker;
+        }
+
+        public object Clone(CloneOptions options)
+        {
+            var display = options?.Display;
+
+            if (display == null)
+            {
+                return Clone();
+            }
+
             float fac = 1;
             if (display.refScale > 1)
             {
                 fac = ReferenceScaleHelper.RefscaleFactor(
                     (float)(display.refScale / display.mapScale),
                     this.SymbolSize, this.MinSymbolSize, this.MaxSymbolSize);
+                fac = options.RefScaleFactor(fac);
             }
             if (display.dpi != 96.0)
+            {
                 fac *= (float)(display.dpi / 96.0);
+            }
 
             TrueTypeMarkerSymbol marker = new TrueTypeMarkerSymbol(new Font(Font.Name, Math.Max(Font.Size * fac / display.Screen.LargeFontsFactor, 2f), _font.Style), _brush.Color);
             marker.Angle = Angle;
@@ -1680,8 +1895,12 @@ namespace gView.Framework.Symbology
             marker._char = _char;
             marker.LegendLabel = _legendLabel;
 
+            marker.MaxSymbolSize = this.MaxSymbolSize;
+            marker.MinSymbolSize = this.MinSymbolSize;
+
             return marker;
         }
+
         #endregion
 
         #region ISymbolRotation Members
@@ -1708,12 +1927,19 @@ namespace gView.Framework.Symbology
         {
             get
             {
-                if (_brush != null) return _brush.Color;
+                if (_brush != null)
+                {
+                    return _brush.Color;
+                }
+
                 return Color.Transparent;
             }
             set
             {
-                if (_brush != null) _brush.Color = value;
+                if (_brush != null)
+                {
+                    _brush.Color = value;
+                }
             }
         }
 
@@ -1748,7 +1974,11 @@ namespace gView.Framework.Symbology
         {
             get
             {
-                if (_font != null) return _font.Size;
+                if (_font != null)
+                {
+                    return _font.Size;
+                }
+
                 return 0;
             }
             set
@@ -1850,7 +2080,11 @@ namespace gView.Framework.Symbology
 
                     try
                     {
-                        if (_image == null) _image = Image.FromFile(_filename);
+                        if (_image == null)
+                        {
+                            _image = Image.FromFile(_filename);
+                        }
+
                         display.GraphicsContext.DrawImage(
                                 _image,
                                 new Rectangle((int)x, (int)y, (int)_sizeX, (int)_sizeY),
@@ -1912,14 +2146,26 @@ namespace gView.Framework.Symbology
 
         #region IClone2 Member
 
-        public object Clone(IDisplay display)
+        public object Clone(CloneOptions options)
         {
-            if (display == null) return Clone();
+            var display = options?.Display;
+
+            if (display == null)
+            {
+                return Clone();
+            }
+
             float fac = 1;
             if (display.refScale > 1)
+            {
                 fac = (float)(display.refScale / display.mapScale);
+                fac = options.RefScaleFactor(fac);
+            }
+
             if (display.dpi != 96.0)
+            {
                 fac *= (float)(display.dpi / 96.0);
+            }
 
             RasterMarkerSymbol marker = new RasterMarkerSymbol();
             marker.Angle = Angle;
@@ -1979,9 +2225,9 @@ namespace gView.Framework.Symbology
             base.Load(stream);
 
             Filename = (string)stream.Load("fn", String.Empty);
-            HorizontalOffset = (float)stream.Load("x");
-            VerticalOffset = (float)stream.Load("y");
-            Angle = (float)stream.Load("a");
+            HorizontalOffset = (float)stream.Load("x", 0f);
+            VerticalOffset = (float)stream.Load("y", 0f);
+            Angle = (float)stream.Load("a", 0f);
             SizeX = (float)stream.Load("sx", 10f);
             SizeY = (float)stream.Load("sy", 10f);
         }
@@ -2166,7 +2412,10 @@ namespace gView.Framework.Symbology
 
                 //dispEnvelope.Raise(75);
                 geometry = gView.Framework.SpatialAlgorithms.Clip.PerformClip(dispEnvelope, geometry);
-                if (geometry == null) return;
+                if (geometry == null)
+                {
+                    return;
+                }
 
                 //GraphicsPath gp2 = DisplayOperations.Geometry2GraphicsPath(display, dispEnvelope);
                 //if (gp2 != null)
@@ -2283,7 +2532,7 @@ namespace gView.Framework.Symbology
                 this.LineStartCap = this.LineEndCap = (LineCap)cap_old;
             }
 
-            this.MaxPenWidth= (float)stream.Load("maxwidth", 0f);
+            this.MaxPenWidth = (float)stream.Load("maxwidth", 0f);
             this.MinPenWidth = (float)stream.Load("minwidth", 0f);
         }
 
@@ -2304,14 +2553,26 @@ namespace gView.Framework.Symbology
         #endregion
 
         #region IClone2
-        public object Clone(IDisplay display)
+        public object Clone(CloneOptions options)
         {
-            if (display == null) return Clone();
+            var display = options?.Display;
+
+            if (display == null)
+            {
+                return Clone();
+            }
+
             float fac = 1;
             if (display.refScale > 1)
+            {
                 fac = (float)(display.refScale / display.mapScale);
+                fac = options.RefScaleFactor(fac);
+            }
+
             if (display.dpi != 96.0)
+            {
                 fac *= (float)(display.dpi / 96.0);
+            }
 
             SimpleLineSymbol clone = new SimpleLineSymbol(_color, ReferenceScaleHelper.PenWidth(_pen.Width * fac, this, display));
             clone.DashStyle = this.DashStyle;
@@ -2484,14 +2745,18 @@ namespace gView.Framework.Symbology
             get
             {
                 if (_outlineSymbol is Symbol)
+                {
                     return ((Symbol)_outlineSymbol).Smoothingmode;
+                }
 
                 return SymbolSmoothing.None;
             }
             set
             {
                 if (_outlineSymbol is Symbol)
+                {
                     ((Symbol)_outlineSymbol).Smoothingmode = value;
+                }
             }
         }
 
@@ -2533,9 +2798,15 @@ namespace gView.Framework.Symbology
         public void FillPath(IDisplay display, System.Drawing.Drawing2D.GraphicsPath path)
         {
             if (_outlineSymbol == null || this.OutlineColor == null || this.OutlineColor.A == 0)
+            {
                 display.GraphicsContext.SmoothingMode = (SmoothingMode)this.SmoothingMode;
+            }
 
-            if (_color.A > 0) display.GraphicsContext.FillPath(_brush, path);
+            if (_color.A > 0)
+            {
+                display.GraphicsContext.FillPath(_brush, path);
+            }
+
             display.GraphicsContext.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
 
             //if (_outlineSymbol != null)
@@ -2570,7 +2841,10 @@ namespace gView.Framework.Symbology
                 this.FillPath(display, gp);
 
                 if (this.OutlineColor != null && this.OutlineColor.A > 0)
+                {
                     SimpleFillSymbol.DrawOutlineSymbol(display, _outlineSymbol, geometry, gp);
+                }
+
                 gp.Dispose(); gp = null;
             }
         }
@@ -2638,24 +2912,41 @@ namespace gView.Framework.Symbology
             base.Save(stream);
 
             stream.Save("color", this.Color.ToArgb());
-            if (_outlineSymbol != null) stream.Save("outlinesymbol", _outlineSymbol);
+            if (_outlineSymbol != null)
+            {
+                stream.Save("outlinesymbol", _outlineSymbol);
+            }
         }
 
         #endregion
 
         #region IClone2
-        public object Clone(IDisplay display)
+        public object Clone(CloneOptions options)
         {
-            if (display == null) return Clone();
+            var display = options?.Display;
+
+            if (display == null)
+            {
+                return Clone();
+            }
+
             float fac = 1;
             if (display.refScale > 1)
+            {
                 fac = (float)(display.refScale / display.mapScale);
+                fac = options.RefScaleFactor(fac);
+            }
+
             if (display.dpi != 96.0)
+            {
                 fac *= (float)(display.dpi / 96.0);
+            }
 
             SimpleFillSymbol fSym = new SimpleFillSymbol(_brush.Color);
             if (_outlineSymbol != null)
-                fSym._outlineSymbol = (ISymbol)_outlineSymbol.Clone(display);
+            {
+                fSym._outlineSymbol = (ISymbol)_outlineSymbol.Clone(options);
+            }
 
             fSym.LegendLabel = _legendLabel;
             //fSym.Smoothingmode = this.Smoothingmode;
@@ -2735,14 +3026,19 @@ namespace gView.Framework.Symbology
         {
             get
             {
-                if(_outlineSymbol is IPenWidth)
+                if (_outlineSymbol is IPenWidth)
+                {
                     return ((IPenWidth)_outlineSymbol).MaxPenWidth;
+                }
+
                 return 0f;
             }
             set
             {
                 if (_outlineSymbol is IPenWidth)
+                {
                     ((IPenWidth)_outlineSymbol).MaxPenWidth = value;
+                }
             }
         }
 
@@ -2754,13 +3050,18 @@ namespace gView.Framework.Symbology
             get
             {
                 if (_outlineSymbol is IPenWidth)
+                {
                     return ((IPenWidth)_outlineSymbol).MinPenWidth;
+                }
+
                 return 0f;
             }
             set
             {
                 if (_outlineSymbol is IPenWidth)
+                {
                     ((IPenWidth)_outlineSymbol).MinPenWidth = value;
+                }
             }
         }
 
@@ -2806,16 +3107,22 @@ namespace gView.Framework.Symbology
                     foreach (SymbolCollectionItem item in ((SymbolCollection)outlineSymbol).Symbols)
                     {
                         if (item.Symbol is IPenDashStyle && ((IPenDashStyle)item.Symbol).PenDashStyle != DashStyle.Solid)
+                        {
                             isDash = true;
+                        }
                     }
                 }
 
                 if (isDash)
                 {
                     if (geometry is IPolygon)
+                    {
                         outlineSymbol.Draw(display, new Polyline((IPolygon)geometry));
+                    }
                     else
+                    {
                         outlineSymbol.Draw(display, geometry);
+                    }
                 }
                 else
                 {
@@ -2827,7 +3134,11 @@ namespace gView.Framework.Symbology
                     {
                         foreach (SymbolCollectionItem item in ((SymbolCollection)outlineSymbol).Symbols)
                         {
-                            if (!item.Visible) continue;
+                            if (!item.Visible)
+                            {
+                                continue;
+                            }
+
                             if (item.Symbol is ILineSymbol)
                             {
                                 ((ILineSymbol)item.Symbol).DrawPath(display, gp);
@@ -2847,7 +3158,9 @@ namespace gView.Framework.Symbology
             set
             {
                 if (_outlineSymbol != null)
+                {
                     _outlineSymbol.SymbolSmothingMode = value;
+                }
             }
         }
 
@@ -2890,12 +3203,20 @@ namespace gView.Framework.Symbology
         {
             get
             {
-                if (_brush == null) return HatchStyle.Cross;
+                if (_brush == null)
+                {
+                    return HatchStyle.Cross;
+                }
+
                 return _brush.HatchStyle;
             }
             set
             {
-                if (_brush != null) _brush.Dispose();
+                if (_brush != null)
+                {
+                    _brush.Dispose();
+                }
+
                 _brush = new HatchBrush(value, ForeColor, BackColor);
             }
         }
@@ -2915,7 +3236,11 @@ namespace gView.Framework.Symbology
                 _forecolor = value;
 
                 HatchStyle hs = this.HatchStyle;
-                if (_brush != null) _brush.Dispose();
+                if (_brush != null)
+                {
+                    _brush.Dispose();
+                }
+
                 _brush = new HatchBrush(hs, ForeColor, BackColor);
             }
         }
@@ -2936,7 +3261,11 @@ namespace gView.Framework.Symbology
                 _backcolor = value;
 
                 HatchStyle hs = this.HatchStyle;
-                if (_brush != null) _brush.Dispose();
+                if (_brush != null)
+                {
+                    _brush.Dispose();
+                }
+
                 _brush = new HatchBrush(hs, ForeColor, BackColor);
             }
         }
@@ -2996,7 +3325,10 @@ namespace gView.Framework.Symbology
 
         public void FillPath(IDisplay display, GraphicsPath path)
         {
-            if (_forecolor.A > 0 || _backcolor.A > 0) display.GraphicsContext.FillPath(_brush, path);
+            if (_forecolor.A > 0 || _backcolor.A > 0)
+            {
+                display.GraphicsContext.FillPath(_brush, path);
+            }
             //if(_outlineSymbol!=null) 
             //{
             //    if(_outlineSymbol is ILineSymbol)
@@ -3084,7 +3416,10 @@ namespace gView.Framework.Symbology
             stream.Save("forecolor", _forecolor.ToArgb());
             stream.Save("backcolor", _backcolor.ToArgb());
             stream.Save("hatchstyle", (int)_brush.HatchStyle);
-            if (_outlineSymbol != null) stream.Save("outlinesymbol", _outlineSymbol);
+            if (_outlineSymbol != null)
+            {
+                stream.Save("outlinesymbol", _outlineSymbol);
+            }
         }
 
         #endregion
@@ -3114,18 +3449,33 @@ namespace gView.Framework.Symbology
         #endregion
 
         #region IClone2
-        public object Clone(IDisplay display)
+        public object Clone(CloneOptions options)
         {
-            if (display == null) return Clone();
+            var display = options?.Display;
+
+            if (display == null)
+            {
+                return Clone();
+            }
+
             float fac = 1;
             if (display.refScale > 1)
+            {
                 fac = (float)(display.refScale / display.mapScale);
+                fac = options.RefScaleFactor(fac);
+            }
+
             if (display.dpi != 96.0)
+            {
                 fac *= (float)(display.dpi / 96.0);
+            }
 
             HatchSymbol hSym = new HatchSymbol(_forecolor, _backcolor, _brush.HatchStyle);
             if (_outlineSymbol != null)
-                hSym._outlineSymbol = (ISymbol)_outlineSymbol.Clone(display);
+            {
+                hSym._outlineSymbol = (ISymbol)_outlineSymbol.Clone(options);
+            }
+
             hSym.LegendLabel = _legendLabel;
 
             return hSym;
@@ -3273,7 +3623,9 @@ namespace gView.Framework.Symbology
             set
             {
                 if (_outlineSymbol != null)
+                {
                     _outlineSymbol.SymbolSmothingMode = value;
+                }
             }
         }
 
@@ -3304,7 +3656,9 @@ namespace gView.Framework.Symbology
             if (geometry is IPolygon)
             {
                 for (int i = 0; i < ((IPolygon)geometry).RingCount; i++)
+                {
                     p.AddRing(((IPolygon)geometry)[i]);
+                }
             }
             else if (geometry is IAggregateGeometry)
             {
@@ -3314,7 +3668,9 @@ namespace gView.Framework.Symbology
                     {
                         IPolygon poly = (IPolygon)((IAggregateGeometry)geometry)[g];
                         for (int i = 0; i < ((IPolygon)poly).RingCount; i++)
+                        {
                             p.AddRing(((IPolygon)poly)[i]);
+                        }
                     }
                     else
                     {
@@ -3348,7 +3704,7 @@ namespace gView.Framework.Symbology
 
         #region IClone2 Member
 
-        public object Clone(IDisplay display)
+        public object Clone(CloneOptions options)
         {
             return new PolygonMaskSymbol();
         }
@@ -3401,7 +3757,9 @@ namespace gView.Framework.Symbology
             set
             {
                 if (_gradient != null)
+                {
                     _gradient = value;
+                }
             }
         }
 
@@ -3437,14 +3795,18 @@ namespace gView.Framework.Symbology
             get
             {
                 if (_outlineSymbol is Symbol)
+                {
                     return ((Symbol)_outlineSymbol).Smoothingmode;
+                }
 
                 return SymbolSmoothing.None;
             }
             set
             {
                 if (_outlineSymbol is Symbol)
+                {
                     ((Symbol)_outlineSymbol).Smoothingmode = value;
+                }
             }
         }
 
@@ -3708,24 +4070,42 @@ namespace gView.Framework.Symbology
 
             stream.Save("gradient", _gradient);
             stream.Save("recttype", (int)_rectType);
-            if (_outlineSymbol != null) stream.Save("outlinesymbol", _outlineSymbol);
+            if (_outlineSymbol != null)
+            {
+                stream.Save("outlinesymbol", _outlineSymbol);
+            }
         }
 
         #endregion
 
         #region IClone2
-        public object Clone(IDisplay display)
+        public object Clone(CloneOptions options)
         {
-            if (display == null) return Clone();
+            var display = options?.Display;
+
+            if (display == null)
+            {
+                return Clone();
+            }
+
             float fac = 1;
             if (display.refScale > 1)
+            {
                 fac = (float)(display.refScale / display.mapScale);
+                fac = options.RefScaleFactor(fac);
+            }
+
             if (display.dpi != 96.0)
+            {
                 fac *= (float)(display.dpi / 96.0);
+            }
 
             GradientFillSymbol fSym = new GradientFillSymbol(_gradient);
             if (_outlineSymbol != null)
-                fSym._outlineSymbol = (ISymbol)_outlineSymbol.Clone(display);
+            {
+                fSym._outlineSymbol = (ISymbol)_outlineSymbol.Clone(options);
+            }
+
             fSym._rectType = _rectType;
             fSym.LegendLabel = _legendLabel;
             return fSym;
@@ -3740,7 +4120,9 @@ namespace gView.Framework.Symbology
             set
             {
                 if (_outlineSymbol != null)
+                {
                     _outlineSymbol.SymbolSmothingMode = value;
+                }
             }
         }
 

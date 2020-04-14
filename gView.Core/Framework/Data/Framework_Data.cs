@@ -218,14 +218,14 @@ namespace gView.Framework.Data
         Task RefreshClasses();
     }
 
-    //public interface IServiceableDataset : gView.Framework.IO.IPersistable
-    //{
-    //    string Name { get; }
-    //    string Provider { get; }
+    public interface IServiceableDataset : gView.Framework.IO.IPersistable
+    {
+        string Name { get; }
+        string Provider { get; }
 
-    //    List<IDataset> Datasets { get; }
-    //    bool GenerateNew();
-    //}
+        List<IDataset> Datasets { get; }
+        bool GenerateNew();
+    }
 
     public interface IRequestDependentDataset
     {
@@ -375,9 +375,17 @@ namespace gView.Framework.Data
         IGroupLayer GroupLayer { get; }
     }
 
+    public enum MapServerGrouplayerStyle
+    {
+        Dropdownable = 0,
+        Checkbox = 1
+    }
+
     public interface IGroupLayer : ILayer
     {
         List<ILayer> ChildLayer { get; }
+
+        MapServerGrouplayerStyle MapServerStyle { get; set; }
     }
 
     public interface IFields : /*IEnumerable<IField>,*/ IClone
@@ -694,6 +702,9 @@ namespace gView.Framework.Data
         
         bool ApplyRefScale { get; set; }
         bool ApplyLabelRefScale { get; set; }
+
+        float MaxRefScaleFactor { get; set; }
+        float MaxLabelRefScaleFactor { get; set; }
 
         IFeatureClass FeatureClass { get; }
         IQueryFilter FilterQuery { get; set; }

@@ -87,6 +87,10 @@ namespace gView.Framework.UI.Dialogs
             panelDefaultLayerSR.Controls.Add(_sr2.panelReferenceSystem);
 
             btnBackgroundColor.BackColor = _display.BackgroundColor;
+
+            txtTitle.Text = _map.Title;
+            txtDescription.Text = _map.GetLayerDescription(Map.MapDescriptionId);
+            txtCopyright.Text = _map.GetLayerCopyrightText(Map.MapCopyrightTextId);
         }
 
 
@@ -128,6 +132,10 @@ namespace gView.Framework.UI.Dialogs
                 }
 
                 _map.LayerDefaultSpatialReference = _sr2.SpatialReference;
+
+                _map.Title = txtTitle.Text;
+                _map.SetLayerDescription(Map.MapDescriptionId, txtDescription.Text);
+                _map.SetLayerCopyrightText(Map.MapCopyrightTextId, txtCopyright.Text);
             }
             catch (Exception ex)
             {

@@ -61,8 +61,15 @@ namespace gView.Framework.UI.Dialogs
             this.tabDefLayerSR = new System.Windows.Forms.TabPage();
             this.panelDefaultLayerSR = new System.Windows.Forms.Panel();
             this.panel5 = new System.Windows.Forms.Panel();
-            this.label8 = new System.Windows.Forms.Label();
             this.btnDefaultLayerSRFromSpatialReference = new System.Windows.Forms.Button();
+            this.label8 = new System.Windows.Forms.Label();
+            this.tabDescription = new System.Windows.Forms.TabPage();
+            this.txtCopyright = new System.Windows.Forms.TextBox();
+            this.label10 = new System.Windows.Forms.Label();
+            this.txtDescription = new System.Windows.Forms.TextBox();
+            this.label9 = new System.Windows.Forms.Label();
+            this.label11 = new System.Windows.Forms.Label();
+            this.txtTitle = new System.Windows.Forms.TextBox();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -75,6 +82,7 @@ namespace gView.Framework.UI.Dialogs
             this.groupBox1.SuspendLayout();
             this.tabDefLayerSR.SuspendLayout();
             this.panel5.SuspendLayout();
+            this.tabDescription.SuspendLayout();
             this.SuspendLayout();
             // 
             // label1
@@ -84,16 +92,16 @@ namespace gView.Framework.UI.Dialogs
             // 
             // btnOK
             // 
-            resources.ApplyResources(this.btnOK, "btnOK");
             this.btnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
+            resources.ApplyResources(this.btnOK, "btnOK");
             this.btnOK.Name = "btnOK";
             this.btnOK.UseVisualStyleBackColor = true;
             this.btnOK.Click += new System.EventHandler(this.btnOK_Click);
             // 
             // btnCancel
             // 
-            resources.ApplyResources(this.btnCancel, "btnCancel");
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            resources.ApplyResources(this.btnCancel, "btnCancel");
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.UseVisualStyleBackColor = true;
             // 
@@ -114,16 +122,16 @@ namespace gView.Framework.UI.Dialogs
             // 
             // cmbMapUnits
             // 
-            resources.ApplyResources(this.cmbMapUnits, "cmbMapUnits");
             this.cmbMapUnits.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbMapUnits.FormattingEnabled = true;
+            resources.ApplyResources(this.cmbMapUnits, "cmbMapUnits");
             this.cmbMapUnits.Name = "cmbMapUnits";
             // 
             // cmbDisplayUnits
             // 
-            resources.ApplyResources(this.cmbDisplayUnits, "cmbDisplayUnits");
             this.cmbDisplayUnits.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbDisplayUnits.FormattingEnabled = true;
+            resources.ApplyResources(this.cmbDisplayUnits, "cmbDisplayUnits");
             this.cmbDisplayUnits.Name = "cmbDisplayUnits";
             // 
             // label4
@@ -133,50 +141,51 @@ namespace gView.Framework.UI.Dialogs
             // 
             // panel1
             // 
-            resources.ApplyResources(this.panel1, "panel1");
             this.panel1.Controls.Add(this.panel2);
             this.panel1.Controls.Add(this.btnCancel);
+            resources.ApplyResources(this.panel1, "panel1");
             this.panel1.Name = "panel1";
             // 
             // panel2
             // 
-            resources.ApplyResources(this.panel2, "panel2");
             this.panel2.Controls.Add(this.btnOK);
+            resources.ApplyResources(this.panel2, "panel2");
             this.panel2.Name = "panel2";
             // 
             // tabControl1
             // 
-            resources.ApplyResources(this.tabControl1, "tabControl1");
             this.tabControl1.Controls.Add(this.tabMap);
             this.tabControl1.Controls.Add(this.tabSR);
             this.tabControl1.Controls.Add(this.tabDefLayerSR);
+            this.tabControl1.Controls.Add(this.tabDescription);
+            resources.ApplyResources(this.tabControl1, "tabControl1");
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
             // 
             // tabMap
             // 
-            resources.ApplyResources(this.tabMap, "tabMap");
             this.tabMap.Controls.Add(this.groupBox3);
             this.tabMap.Controls.Add(this.groupBox2);
             this.tabMap.Controls.Add(this.groupBox1);
+            resources.ApplyResources(this.tabMap, "tabMap");
             this.tabMap.Name = "tabMap";
             this.tabMap.UseVisualStyleBackColor = true;
             // 
             // groupBox3
             // 
-            resources.ApplyResources(this.groupBox3, "groupBox3");
             this.groupBox3.Controls.Add(this.panel4);
             this.groupBox3.Controls.Add(this.panel3);
+            resources.ApplyResources(this.groupBox3, "groupBox3");
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.TabStop = false;
             // 
             // panel4
             // 
-            resources.ApplyResources(this.panel4, "panel4");
             this.panel4.BackColor = System.Drawing.Color.Gainsboro;
             this.panel4.Controls.Add(this.btnNoAntialiasFeatures);
             this.panel4.Controls.Add(this.btnAntialiasFeatures);
             this.panel4.Controls.Add(this.label7);
+            resources.ApplyResources(this.panel4, "panel4");
             this.panel4.Name = "panel4";
             // 
             // btnNoAntialiasFeatures
@@ -200,11 +209,11 @@ namespace gView.Framework.UI.Dialogs
             // 
             // panel3
             // 
-            resources.ApplyResources(this.panel3, "panel3");
             this.panel3.BackColor = System.Drawing.Color.Gainsboro;
             this.panel3.Controls.Add(this.btnNoAntialiasLabels);
             this.panel3.Controls.Add(this.btnAntialiasLabels);
             this.panel3.Controls.Add(this.label6);
+            resources.ApplyResources(this.panel3, "panel3");
             this.panel3.Name = "panel3";
             // 
             // btnNoAntialiasLabels
@@ -228,7 +237,6 @@ namespace gView.Framework.UI.Dialogs
             // 
             // groupBox2
             // 
-            resources.ApplyResources(this.groupBox2, "groupBox2");
             this.groupBox2.Controls.Add(this.btnTransparent);
             this.groupBox2.Controls.Add(this.btnBackgroundColor);
             this.groupBox2.Controls.Add(this.label5);
@@ -238,6 +246,7 @@ namespace gView.Framework.UI.Dialogs
             this.groupBox2.Controls.Add(this.cmbDisplayUnits);
             this.groupBox2.Controls.Add(this.label1);
             this.groupBox2.Controls.Add(this.cmbMapUnits);
+            resources.ApplyResources(this.groupBox2, "groupBox2");
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.TabStop = false;
             // 
@@ -272,9 +281,9 @@ namespace gView.Framework.UI.Dialogs
             // 
             // groupBox1
             // 
-            resources.ApplyResources(this.groupBox1, "groupBox1");
             this.groupBox1.Controls.Add(this.txtName);
             this.groupBox1.Controls.Add(this.label2);
+            resources.ApplyResources(this.groupBox1, "groupBox1");
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.TabStop = false;
             // 
@@ -286,9 +295,9 @@ namespace gView.Framework.UI.Dialogs
             // 
             // tabDefLayerSR
             // 
-            resources.ApplyResources(this.tabDefLayerSR, "tabDefLayerSR");
             this.tabDefLayerSR.Controls.Add(this.panelDefaultLayerSR);
             this.tabDefLayerSR.Controls.Add(this.panel5);
+            resources.ApplyResources(this.tabDefLayerSR, "tabDefLayerSR");
             this.tabDefLayerSR.Name = "tabDefLayerSR";
             this.tabDefLayerSR.UseVisualStyleBackColor = true;
             // 
@@ -299,15 +308,10 @@ namespace gView.Framework.UI.Dialogs
             // 
             // panel5
             // 
-            resources.ApplyResources(this.panel5, "panel5");
             this.panel5.Controls.Add(this.btnDefaultLayerSRFromSpatialReference);
             this.panel5.Controls.Add(this.label8);
+            resources.ApplyResources(this.panel5, "panel5");
             this.panel5.Name = "panel5";
-            // 
-            // label8
-            // 
-            resources.ApplyResources(this.label8, "label8");
-            this.label8.Name = "label8";
             // 
             // btnDefaultLayerSRFromSpatialReference
             // 
@@ -315,6 +319,55 @@ namespace gView.Framework.UI.Dialogs
             this.btnDefaultLayerSRFromSpatialReference.Name = "btnDefaultLayerSRFromSpatialReference";
             this.btnDefaultLayerSRFromSpatialReference.UseVisualStyleBackColor = true;
             this.btnDefaultLayerSRFromSpatialReference.Click += new System.EventHandler(this.btnDefaultLayerSRFromSpatialReference_Click);
+            // 
+            // label8
+            // 
+            resources.ApplyResources(this.label8, "label8");
+            this.label8.Name = "label8";
+            // 
+            // tabDescription
+            // 
+            this.tabDescription.Controls.Add(this.txtTitle);
+            this.tabDescription.Controls.Add(this.label11);
+            this.tabDescription.Controls.Add(this.txtCopyright);
+            this.tabDescription.Controls.Add(this.label10);
+            this.tabDescription.Controls.Add(this.txtDescription);
+            this.tabDescription.Controls.Add(this.label9);
+            resources.ApplyResources(this.tabDescription, "tabDescription");
+            this.tabDescription.Name = "tabDescription";
+            this.tabDescription.UseVisualStyleBackColor = true;
+            // 
+            // txtCopyright
+            // 
+            this.txtCopyright.AcceptsReturn = true;
+            resources.ApplyResources(this.txtCopyright, "txtCopyright");
+            this.txtCopyright.Name = "txtCopyright";
+            // 
+            // label10
+            // 
+            resources.ApplyResources(this.label10, "label10");
+            this.label10.Name = "label10";
+            // 
+            // txtDescription
+            // 
+            this.txtDescription.AcceptsReturn = true;
+            resources.ApplyResources(this.txtDescription, "txtDescription");
+            this.txtDescription.Name = "txtDescription";
+            // 
+            // label9
+            // 
+            resources.ApplyResources(this.label9, "label9");
+            this.label9.Name = "label9";
+            // 
+            // label11
+            // 
+            resources.ApplyResources(this.label11, "label11");
+            this.label11.Name = "label11";
+            // 
+            // txtTitle
+            // 
+            resources.ApplyResources(this.txtTitle, "txtTitle");
+            this.txtTitle.Name = "txtTitle";
             // 
             // FormMapProperties
             // 
@@ -340,6 +393,8 @@ namespace gView.Framework.UI.Dialogs
             this.tabDefLayerSR.ResumeLayout(false);
             this.panel5.ResumeLayout(false);
             this.panel5.PerformLayout();
+            this.tabDescription.ResumeLayout(false);
+            this.tabDescription.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -380,5 +435,12 @@ namespace gView.Framework.UI.Dialogs
         private System.Windows.Forms.Panel panel5;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Button btnDefaultLayerSRFromSpatialReference;
+        private System.Windows.Forms.TabPage tabDescription;
+        private System.Windows.Forms.TextBox txtCopyright;
+        private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.TextBox txtDescription;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.TextBox txtTitle;
+        private System.Windows.Forms.Label label11;
     }
 }

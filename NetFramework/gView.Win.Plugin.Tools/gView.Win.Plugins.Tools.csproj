@@ -31,13 +31,16 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.Drawing.Common, Version=4.0.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Drawing.Common.4.6.0-preview6.19303.8\lib\net461\System.Drawing.Common.dll</HintPath>
+    <Reference Include="System.Drawing.Common, Version=4.0.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\System.Drawing.Common.4.7.0\lib\net461\System.Drawing.Common.dll</HintPath>
     </Reference>
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Windows.Forms" />
@@ -143,6 +146,12 @@
     <Compile Include="Plugins\MapTools\Dialogs\FormMapDatasets.Designer.cs">
       <DependentUpon>FormMapDatasets.cs</DependentUpon>
     </Compile>
+    <Compile Include="Plugins\MapTools\Dialogs\FormMatchGeoserviceLayerIds.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Plugins\MapTools\Dialogs\FormMatchGeoserviceLayerIds.Designer.cs">
+      <DependentUpon>FormMatchGeoserviceLayerIds.cs</DependentUpon>
+    </Compile>
     <Compile Include="Plugins\MapTools\Dialogs\FormMeasure.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -218,6 +227,7 @@
     <Compile Include="Plugins\MapTools\Graphics\Rectangle.cs" />
     <Compile Include="Plugins\MapTools\Graphics\Tool.Graphics.cs" />
     <Compile Include="Plugins\MapTools\gvChart.cs" />
+    <Compile Include="Plugins\MapTools\MatchGeoserviceLayerIds.cs" />
     <Compile Include="Plugins\MapTools\NewTool.cs" />
     <Compile Include="Plugins\MapTools\OnMapStart.cs" />
     <Compile Include="Plugins\MapTools\OpenRendererFilter.cs" />
@@ -301,6 +311,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Plugins\MapTools\Dialogs\FormMapDatasets.resx">
       <DependentUpon>FormMapDatasets.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Plugins\MapTools\Dialogs\FormMatchGeoserviceLayerIds.resx">
+      <DependentUpon>FormMatchGeoserviceLayerIds.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Plugins\MapTools\Dialogs\FormMeasure.de.resx">
       <DependentUpon>FormMeasure.cs</DependentUpon>
@@ -403,9 +416,17 @@
       <Project>{82012e45-2efc-498e-9bb1-f3deba4b87c5}</Project>
       <Name>gView.Geometry</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\gView.Interoperability.GeoServices\gView.Interoperability.GeoServices.csproj">
+      <Project>{7b010002-084b-4d1d-9b06-4ec70ec93ca2}</Project>
+      <Name>gView.Interoperability.GeoServices</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\gView.Offline\gView.Offline.csproj">
       <Project>{7eaf9c21-4c1d-4996-b111-7c503217b8f5}</Project>
       <Name>gView.Offline</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\gView.Server.Connector\gView.Server.Connector.csproj">
+      <Project>{2678b2d7-4eeb-4945-8f77-6d0add3a8b48}</Project>
+      <Name>gView.Server.Connector</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\gView.Symbology\gView.Symbology.csproj">
       <Project>{c37d6d4b-5670-49b9-8592-48e9dcc0aa3c}</Project>
@@ -435,10 +456,6 @@
       <Project>{68ff06ec-cebd-4ba4-a536-6c09d9714066}</Project>
       <Name>gView.Win.Globalisation</Name>
     </ProjectReference>
-    <ProjectReference Include="..\gView.Win.MapServer.Connector\gView.Win.MapServer.Connector.csproj">
-      <Project>{249e5894-40ca-4692-b876-9df3b1a9e481}</Project>
-      <Name>gView.Win.MapServer.Connector</Name>
-    </ProjectReference>
     <ProjectReference Include="..\gView.Win.Snapping.Core\gView.Win.Snapping.Core.csproj">
       <Project>{1075bb0d-7dfc-440c-a790-51001bcf0725}</Project>
       <Name>gView.Win.Snapping.Core</Name>
@@ -454,8 +471,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\add_data.png" />
   </ItemGroup>
   <ItemGroup>
@@ -673,6 +688,29 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\zoom2selection.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\exit-26-w.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\exit-16-w.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\save-16-w.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\save-as-16-w.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\add_data.png" />
+    <Resource Include="Images\new.png" />
+    <Resource Include="Images\open48.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\plugins-16-w.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\new-16-w.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

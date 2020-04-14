@@ -15,6 +15,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -148,11 +149,11 @@ namespace gView.Plugins.MapTools
             }
         }
 
-        public Task<bool> OnEvent(object MapEvent)
+        async public Task<bool> OnEvent(object MapEvent)
         {
             if (_doc == null)
             {
-                return Task.FromResult(true);
+                return true;
             }
 
             System.Windows.Forms.OpenFileDialog dlg = new OpenFileDialog();
@@ -162,11 +163,32 @@ namespace gView.Plugins.MapTools
             {
                 if (_doc.Application is IMapApplication)
                 {
-                    ((IMapApplication)_doc.Application).LoadMapDocument(dlg.FileName);
+                    FileInfo fi = new FileInfo(dlg.FileName);
+                    FileInfo restoreFi = new FileInfo(dlg.FileName + ".restore");
+
+                    if (restoreFi.Exists && restoreFi.LastWriteTimeUtc > fi.LastWriteTimeUtc)
+                    {
+                        StringBuilder msg = new StringBuilder();
+                        msg.Append("For the specified file there is a 'restore' file that is newer than the actual project file. This may indicate that the project did not finish properly before the program was last closed. The program may have crashed last time!");
+                        msg.Append(Environment.NewLine);
+                        msg.Append(Environment.NewLine);
+                        msg.Append("Note: if you no longer want to show this message, open the project and then save it again.");
+                        msg.Append(Environment.NewLine);
+                        msg.Append(Environment.NewLine);
+                        msg.Append("Do you want to load the 'restore' file instead of the project?");
+
+                        if(MessageBox.Show(msg.ToString(), "Load restore file?", MessageBoxButtons.YesNo, MessageBoxIcon.Information)== DialogResult.Yes)
+                        {
+                            await ((IMapApplication)_doc.Application).LoadMapDocument(restoreFi.FullName);
+                            return true;
+                        }
+                    }
+                        
+                    await ((IMapApplication)_doc.Application).LoadMapDocument(dlg.FileName);
                 }
             }
 
-            return Task.FromResult(true);
+            return true;
         }
 
         public gView.Framework.UI.ToolType toolType
@@ -216,7 +238,7 @@ namespace gView.Plugins.MapTools
 
         #region ITool Member
 
-        public object Image
+        virtual public object Image
         {
             get
             {
@@ -326,6 +348,18 @@ namespace gView.Plugins.MapTools
 
     }
 
+    [RegisterPlugInAttribute("7DC2ECC7-DC8C-49B4-9AA6-DBEEB0026E0A")]
+    public class SaveDocumentBackstage : SaveDocument
+    {
+        public override object Image
+        {
+            get
+            {
+                return gView.Win.Plugin.Tools.Properties.Resources.save_16_w;
+            }
+        }
+    }
+
     [RegisterPlugInAttribute("17D0A3C1-5EE9-4ddd-9402-E6E9EAB1CD06")]
     public class SaveDocumentAs : gView.Framework.UI.ITool
     {
@@ -337,7 +371,7 @@ namespace gView.Plugins.MapTools
         {
             get
             {
-                return null;
+                return gView.Win.Plugin.Tools.Properties.Resources.save_as_16_w;
             }
         }
 
@@ -444,8 +478,7 @@ namespace gView.Plugins.MapTools
         {
             get
             {
-                Buttons dlg = new Buttons();
-                return dlg.imageList1.Images[14];
+                return gView.Win.Plugin.Tools.Properties.Resources.exit_16_w;
             }
         }
 
@@ -573,8 +606,8 @@ namespace gView.Plugins.MapTools
                     //gView.MapServer.Connector.MapServerInstanceTypeService proxy = new gView.MapServer.Connector.MapServerInstanceTypeService(
                     //    dlg.Server + ":" + dlg.Port.ToString());
 
-                    string serverUrl = MapServer.Connector.MapServerConnection.ServerUrl(dlg.Server, dlg.Port);
-                    gView.MapServer.Connector.MapServerConnection service = new MapServer.Connector.MapServerConnection(serverUrl);
+                    string serverUrl = Server.Connector.ServerConnection.ServerUrl(dlg.Server, dlg.Port);
+                    Server.Connector.ServerConnection service = new Server.Connector.ServerConnection(serverUrl);
                     if (!service.AddMap(dlg.ServiceName, sb.ToString(), dlg.Username, dlg.Password))
                     {
                         throw new Exception("Unable to add service..." + Environment.NewLine + service.LastErrorMessage);
@@ -2712,7 +2745,9 @@ namespace gView.Plugins.MapTools
 
             if (layer is ILayer)
             {
-                FormLayerProperties dlg = new FormLayerProperties((IDataset)dataset, (ILayer)layer);
+                var map = _doc.MapFromDataset(dataset as IDataset) ?? _doc.MapFromLayer((ILayer)layer);
+
+                FormLayerProperties dlg = new FormLayerProperties(_doc, map, (IDataset)dataset, (ILayer)layer);
 
                 if (dlg.ShowDialog() == DialogResult.OK)
                 {

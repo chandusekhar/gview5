@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace gView.Framework.IO
 {
-	public interface IPersistStream 
+	public interface IPersistStream : IErrorReport
 	{
 		object Load(string key);
 		object Load(string key,object defVal);
@@ -24,6 +24,17 @@ namespace gView.Framework.IO
 		//void ReadStream(string path);
 	}
 
+    public interface IErrorReport
+    {
+        void AddWarning(string warning, object source);
+        void AddError(string error, object source);
+
+        IEnumerable<string> Warnings { get; }
+        IEnumerable<string> Errors { get; }
+
+        void ClearErrorsAndWarnings();
+    }
+
     public interface IPersistable 
 	{
         void Load(IPersistStream stream);
@@ -40,6 +51,13 @@ namespace gView.Framework.IO
     {
         object this[string key] { get; set; }
     }
+
+    public interface IPersistableTemporaryRestore
+    {
+        void TemporaryRestore();
+        void RemoveTemporeryRestore();
+    }
+
     public interface IXmlString
     {
         string ToXmlString();

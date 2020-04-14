@@ -110,6 +110,7 @@ namespace gView.DataSources.MSSqlSpatial
             if (shape is IPolygon)
             {
                 #region Check Polygon Rings
+
                 IPolygon p = new Polygon();
                 for (int i = 0; i < ((IPolygon)shape).RingCount; i++)
                 {
@@ -126,11 +127,13 @@ namespace gView.DataSources.MSSqlSpatial
                     return null;
                 }
                 shape = p;
+
                 #endregion
             }
             else if (shape is IPolyline)
             {
                 #region Check Polyline Paths
+
                 IPolyline l = new Polyline();
                 for (int i = 0; i < ((IPolyline)shape).PathCount; i++)
                 {
@@ -147,6 +150,7 @@ namespace gView.DataSources.MSSqlSpatial
                     return null;
                 }
                 shape = l;
+
                 #endregion
             }
 
@@ -337,7 +341,7 @@ namespace gView.DataSources.MSSqlSpatial
 
             if (!String.IsNullOrEmpty(where))
             {
-                command.CommandText += " WHERE " + where + ((filterWhereClause != "") ? " AND " + filterWhereClause : "");
+                command.CommandText += " WHERE " + where + ((filterWhereClause != "") ? $" AND ({ filterWhereClause })" : "");
             }
             else if (!String.IsNullOrEmpty(filterWhereClause))
             {
@@ -945,7 +949,7 @@ namespace gView.DataSources.MSSqlSpatial
 
             if (!String.IsNullOrEmpty(where))
             {
-                command.CommandText += " WHERE " + where + ((filterWhereClause != "") ? " AND " + filterWhereClause : "");
+                command.CommandText += " WHERE " + where + ((filterWhereClause != "") ? $" AND ({ filterWhereClause })" : "");
             }
             else if (!String.IsNullOrEmpty(filterWhereClause))
             {

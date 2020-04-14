@@ -196,7 +196,7 @@ namespace gView.Interoperability.GeoServices.Request
                             context.ServiceRequest.Succeeded = true;
                             context.ServiceRequest.Response = JsonConvert.SerializeObject(new JsonExportResponse()
                             {
-                                Href = _mapServer.OutputUrl + "/" + fileName,
+                                Href = context.ServiceRequest.OutputUrl + "/" + fileName,
                                 Width = serviceMap.Display.iWidth,
                                 Height = serviceMap.Display.iHeight,
                                 ContentType = "image/" + iFormat.ToString().ToLower(),
@@ -242,41 +242,78 @@ namespace gView.Interoperability.GeoServices.Request
 
         private void ServiceMap_BeforeRenderLayers(Framework.Carto.IServiceMap sender, List<Framework.Data.ILayer> layers)
         {
-            if (String.IsNullOrWhiteSpace(_exportMap?.Layers) || !_exportMap.Layers.Contains(":"))
-                return;
-
-            string option = _exportMap.Layers.Substring(0, _exportMap.Layers.IndexOf(":")).ToLower();
-            int[] layerIds = _exportMap.Layers.Substring(_exportMap.Layers.IndexOf(":") + 1)
-                                    .Split(',').Select(l => int.Parse(l)).ToArray();
-
-            foreach (var layer in layers)
+            if (!String.IsNullOrWhiteSpace(_exportMap?.Layers) && _exportMap.Layers.Contains(":"))
             {
-                var tocElement = sender.TOC.GetTOCElementByLayerId(layer.ID);
-                bool layerIdContains = tocElement != null ?
-                    LayerOrParentIsInArray(sender, tocElement, layerIds) :
-                    layerIds.Contains(layer.ID);
+                #region Apply Visibility
 
-                switch (option)
+                string option = _exportMap.Layers.Substring(0, _exportMap.Layers.IndexOf(":")).ToLower();
+                int[] layerIds = _exportMap.Layers.Substring(_exportMap.Layers.IndexOf(":") + 1)
+                                        .Split(',').Select(l => int.Parse(l)).ToArray();
+
+
+                foreach (var layer in layers)
                 {
-                    case "show":
-                        layer.Visible = layerIdContains;
-                        break;
-                    case "hide":
-                        layer.Visible = !layerIdContains;
-                        break;
-                    case "include":
-                        if (layerIdContains)
-                            layer.Visible = true;
-                        break;
-                    case "exclude":
-                        if (layerIdContains)
-                            layer.Visible = false;
-                        break;
+                    var tocElement = sender.TOC.GetTOCElementByLayerId(layer.ID);
+                    bool layerIdContains = tocElement != null ?
+                        LayerOrParentIsInArray(sender, tocElement, layerIds) :    // this is how AGS works: if group is shown -> all layers in group are shown...
+                        layerIds.Contains(layer.ID);
+
+                    switch (option)
+                    {
+                        case "show":
+                            layer.Visible = layerIdContains;
+                            break;
+                        case "hide":
+                            layer.Visible = !layerIdContains;
+                            break;
+                        case "include":
+                            if (layerIdContains)
+                                layer.Visible = true;
+                            break;
+                        case "exclude":
+                            if (layerIdContains)
+                                layer.Visible = false;
+                            break;
+                    }
                 }
+
+                #endregion
+            }
+
+            if (!String.IsNullOrEmpty(_exportMap?.LayerDefs))
+            {
+                #region Apply Layer Definitions
+
+                Dictionary<string, string> layerDefs = null;
+
+                try
+                {
+                    layerDefs = JsonConvert.DeserializeObject<Dictionary<string, string>>(_exportMap.LayerDefs);
+
+                    foreach (var layerId in layerDefs.Keys)
+                    {
+                        var lID = int.Parse(layerId);
+                        var layer = layers.Where(l => l.ID == lID).FirstOrDefault();
+                        if(layer is IFeatureLayer)
+                        {
+                            ((IFeatureLayer)layer).FilterQuery = ((IFeatureLayer)layer).FilterQuery.AppendWhereClause(layerDefs[layerId]);
+
+                            //File.WriteAllText("c:\\temp\\filter.txt", ((IFeatureLayer)layer).FilterQuery.WhereClause);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Can't parse layer definitions: { ex.Message }");
+                }
+
+                #endregion
             }
 
             if (!String.IsNullOrWhiteSpace(_exportMap.DynamicLayers))
             {
+                #region Apply Dynamic Layers
+
                 var jsonDynamicLayers = JsonConvert.DeserializeObject<JsonDynamicLayer[]>(_exportMap.DynamicLayers);
                 foreach (var jsonDynamicLayer in jsonDynamicLayers)
                 {
@@ -322,7 +359,32 @@ namespace gView.Interoperability.GeoServices.Request
                         }
                     }
                 }
+
+                #endregion
             }
+        }
+
+        private bool LayerAndParentIsInArray(IServiceMap map, ITOCElement tocElement, int[] layerIds)
+        {
+            if(tocElement == null)
+            {
+                return false;
+            }
+
+            while (tocElement != null)
+            {
+                if (tocElement.Layers != null)
+                {
+                    foreach (var layer in tocElement.Layers)
+                    {
+                        if (!layerIds.Contains(layer.ID))
+                            return false;
+                    }
+                }
+                tocElement = tocElement.ParentGroup;
+            }
+
+            return true;
         }
 
         private bool LayerOrParentIsInArray(IServiceMap map, ITOCElement tocElement, int[] layerIds)
@@ -471,51 +533,67 @@ namespace gView.Interoperability.GeoServices.Request
 
                         #endregion
 
-                        using (var cursor = await tableClass.Search(filter))
+
+                        bool transform = false;
+                        using (var geoTransfromer = GeometricTransformerFactory.Create())
                         {
-                            bool firstFeature = true;
-                            if (cursor is IFeatureCursor)
+                            if (tableClass is IFeatureClass && ((IFeatureClass)tableClass).SpatialReference == null && filter.FeatureSpatialReference != null && serviceMap.LayerDefaultSpatialReference != null)
                             {
-                                IFeature feature;
-                                IFeatureCursor featureCursor = (IFeatureCursor)cursor;
-                                while ((feature = await featureCursor.NextFeature()) != null)
+                                geoTransfromer.SetSpatialReferences(serviceMap.LayerDefaultSpatialReference, filter.FeatureSpatialReference);
+                                transform = true;
+                            }
+
+                            using (var cursor = await tableClass.Search(filter))
+                            {
+                                bool firstFeature = true;
+                                if (cursor is IFeatureCursor)
                                 {
-                                    featureCount++;
-                                    var jsonFeature = new JsonFeature();
-                                    var attributesDict = (IDictionary<string, object>)jsonFeature.Attributes;
-
-                                    if (feature.Fields != null)
+                                    IFeature feature;
+                                    IFeatureCursor featureCursor = (IFeatureCursor)cursor;
+                                    while ((feature = await featureCursor.NextFeature()) != null)
                                     {
-                                        foreach (var field in feature.Fields)
-                                        {
-                                            object val = field.Value;
-                                            if (val is DateTime)
-                                            {
-                                                val = Convert.ToInt64(((DateTime)val - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
-                                            }
-                                            attributesDict[field.Name] = val;
+                                        featureCount++;
+                                        var jsonFeature = new JsonFeature();
+                                        var attributesDict = (IDictionary<string, object>)jsonFeature.Attributes;
 
-                                            if (firstFeature)
+                                        if (feature.Fields != null)
+                                        {
+                                            foreach (var field in feature.Fields)
                                             {
-                                                var tableField = tableClass.FindField(field.Name);
-                                                if (tableField != null)
+                                                object val = field.Value;
+                                                if (val is DateTime)
                                                 {
-                                                    jsonFields.Add(new JsonFeatureResponse.Field()
+                                                    val = Convert.ToInt64(((DateTime)val - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds);
+                                                }
+                                                attributesDict[field.Name] = val;
+
+                                                if (firstFeature)
+                                                {
+                                                    var tableField = tableClass.FindField(field.Name);
+                                                    if (tableField != null)
                                                     {
-                                                        Name = tableField.name,
-                                                        Alias = tableField.aliasname,
-                                                        Length = tableField.size,
-                                                        Type = JsonField.ToType(tableField.type).ToString()
-                                                    });
+                                                        jsonFields.Add(new JsonFeatureResponse.Field()
+                                                        {
+                                                            Name = tableField.name,
+                                                            Alias = tableField.aliasname,
+                                                            Length = tableField.size,
+                                                            Type = JsonField.ToType(tableField.type).ToString()
+                                                        });
+                                                    }
                                                 }
                                             }
                                         }
+
+                                        if(transform)
+                                        {
+                                            feature.Shape = geoTransfromer.Transform2D(feature.Shape) as IGeometry;
+                                        }
+
+                                        jsonFeature.Geometry = feature.Shape?.ToJsonGeometry();
+
+                                        jsonFeatures.Add(jsonFeature);
+                                        firstFeature = false;
                                     }
-
-                                    jsonFeature.Geometry = feature.Shape?.ToJsonGeometry();
-
-                                    jsonFeatures.Add(jsonFeature);
-                                    firstFeature = false;
                                 }
                             }
                         }
@@ -671,7 +749,7 @@ namespace gView.Interoperability.GeoServices.Request
                         throw new Exception("Featureclass is not editable");
                     }
 
-                    List<IFeature> features = GetFeatures(featureClass, editRequest);
+                    List<IFeature> features = GetFeatures(featureClass, editRequest, true);
                     if (features.Count == 0)
                         throw new Exception("No features to add");
 
@@ -734,7 +812,7 @@ namespace gView.Interoperability.GeoServices.Request
                         throw new Exception("Featureclass is not editable");
                     }
 
-                    List<IFeature> features = GetFeatures(featureClass, editRequest);
+                    List<IFeature> features = GetFeatures(featureClass, editRequest, true);
                     if (features.Count == 0)
                         throw new Exception("No features to add");
 
@@ -864,12 +942,35 @@ namespace gView.Interoperability.GeoServices.Request
             return featureClass;
         }
 
-        private List<IFeature> GetFeatures(IFeatureClass featureClass, JsonFeatureServerUpdateRequest editRequest)
+        private List<IFeature> GetFeatures(IFeatureClass featureClass, JsonFeatureServerUpdateRequest editRequest, bool projetToFeatureClassSpatialReference)
         {
+            int? fcSrs = featureClass?.SpatialReference?.EpsgCode;
+
             List<IFeature> features = new List<IFeature>();
             foreach (var jsonFeature in editRequest.Features)
             {
-                features.Add(ToFeature(featureClass, jsonFeature));
+                var feature = ToFeature(featureClass, jsonFeature);
+
+                if (projetToFeatureClassSpatialReference == true)
+                {
+                    if (feature.Shape != null && feature.Shape.Srs.HasValue && !feature.Shape.Srs.Equals(fcSrs))
+                    {
+                        using (var transformer = GeometricTransformerFactory.Create())
+                        {
+                            var fromSrs = SpatialReference.FromID("epsg:" + feature.Shape.Srs.ToString());
+                            var toSrs = SpatialReference.FromID("epsg:" + fcSrs.ToString());
+
+                            transformer.SetSpatialReferences(fromSrs, toSrs);
+
+                            var transformedShape = transformer.Transform2D(feature.Shape) as IGeometry;
+                            transformedShape.Srs = fcSrs;
+
+                            feature.Shape = transformedShape;
+                        }
+                    }
+                }
+
+                features.Add(feature);
             }
 
             return features;

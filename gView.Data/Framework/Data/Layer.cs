@@ -387,6 +387,8 @@ namespace gView.Framework.Data
             get { return gView.Framework.system.ListOperations<ILayer>.Clone(_childLayers); }
         }
 
+        public MapServerGrouplayerStyle MapServerStyle { get; set; }
+
         #endregion
 
         public void Add(Layer layer)
@@ -403,6 +405,24 @@ namespace gView.Framework.Data
             _childLayers.Remove(layer);
             layer.GroupLayer = null;
         }
+
+        #region IPersitable
+
+        public override void Load(IPersistStream stream)
+        {
+            base.Load(stream);
+
+            this.MapServerStyle = (MapServerGrouplayerStyle)(int)stream.Load("MapServerStyle", (int)MapServerGrouplayerStyle.Dropdownable);
+        }
+
+        public override void Save(IPersistStream stream)
+        {
+            base.Save(stream);
+
+            stream.Save("MapServerStyle", (int)this.MapServerStyle);
+        }
+
+        #endregion
     }
     public class Fields : IFields, IPersistable
     {
@@ -837,6 +857,9 @@ namespace gView.Framework.Data
                 _applyRefScale = layer.ApplyRefScale;
                 _applyLabelRefScale = layer.ApplyLabelRefScale;
 
+                this.MaxRefScaleFactor = layer.MaxRefScaleFactor;
+                this.MaxLabelRefScaleFactor = layer.MaxLabelRefScaleFactor;
+
                 _fields.CopyFrom(layer.Fields, this.Class);
                 _geometryType = layer.LayerGeometryType;
 
@@ -984,6 +1007,9 @@ namespace gView.Framework.Data
             }
         }
 
+        public float MaxRefScaleFactor { get; set; }
+        public float MaxLabelRefScaleFactor { get; set; }
+
         public IFields Fields
         {
             get { return _fields; }
@@ -1030,6 +1056,10 @@ namespace gView.Framework.Data
 
             _applyRefScale = (bool)stream.Load("applyRefScale", true);
             _applyLabelRefScale = (bool)stream.Load("applyLRefScale", true);
+
+            this.MaxRefScaleFactor = (float)stream.Load("maxRefScaleFactor", 0f);
+            this.MaxLabelRefScaleFactor = (float)stream.Load("maxLabelRefScaleFactor", 0f);
+
             _geometryType = (geometryType)stream.Load("geomType", (int)geometryType.Unknown);
 
             string filterQuery = (string)stream.Load("FilterQuery", "");
@@ -1062,6 +1092,11 @@ namespace gView.Framework.Data
                 stream.Save("applyRefScale", _applyRefScale);
             if (_applyLabelRefScale == false)
                 stream.Save("applyLRefScale", _applyLabelRefScale);
+            if (this.MaxRefScaleFactor > 0D)
+                stream.Save("maxRefScaleFactor", this.MaxRefScaleFactor);
+            if (this.MaxLabelRefScaleFactor > 0D)
+                stream.Save("maxLabelRefScaleFactor", this.MaxLabelRefScaleFactor);
+
             if (_geometryType != geometryType.Unknown)
                 stream.Save("geomType", (int)_geometryType);
 
@@ -1895,6 +1930,8 @@ namespace gView.Framework.Data
                 feature.Shape = _transformer.Transform2D(feature.Shape) as IGeometry;
             }
         }
+
+        protected ICancelTracker CancelTracker { get; set; }
 
         #region IFeatureCursor Member
 

@@ -10,6 +10,7 @@ using gView.Framework.system;
 using gView.Framework.UI;
 using gView.Framework.UI.Controls;
 using gView.Framework.XML;
+using gView.system.UI.Framework.system.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -302,6 +303,7 @@ namespace gView.Win.Carto
             switch (MessageBox.Show("Save changes in document?", "gView.Carto", MessageBoxButtons.YesNoCancel))
             {
                 case DialogResult.No:
+                    _doc.RemoveTemporeryRestore();
                     return true;
                 case DialogResult.Yes:
                     this.SaveMapDocument(_docFilename, true);
@@ -660,8 +662,23 @@ namespace gView.Win.Carto
 
             IsDirty = false;
 
+            if(fi.Extension.ToLower()==".restore")
+            {
+                IsDirty = true;
+                fi = new FileInfo(fi.FullName.Substring(0, fi.FullName.Length - ".restore".Length));
+                _docFilename = fi.FullName;
+            }
+
             _appWindow.Title = "gView.Carto " + fi.Name;
             _readonly = (fi.Extension.ToLower() == ".rdm");
+
+            foreach(var map in _doc.Maps)
+            {
+                if(map.HasErrorMessages)
+                {
+                    FormToolException.Show($"Loading Map '{ map.Name }'", String.Join(Environment.NewLine, map.ErrorMessages));
+                }
+            }
 
             if (AfterLoadMapDocument != null)
             {
@@ -723,10 +740,14 @@ namespace gView.Win.Carto
                 stream.WriteStream(filename);
             }
 
-            IsDirty = false;
-            _docFilename = filename;
+            if (fi.Extension.ToLower() != ".restore")
+            {
+                IsDirty = false;
+                _docFilename = filename;
 
-            _appWindow.Title = "gView.Carto " + fi.Name;
+
+                _appWindow.Title = "gView.Carto " + fi.Name;
+            }
         }
 
         public string DocumentFilename

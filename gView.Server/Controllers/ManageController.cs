@@ -55,8 +55,8 @@ namespace gView.Server.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
-                Console.WriteLine("UN: "+model.Username);
-                Console.WriteLine("PW: "+model.Password);
+                //Console.WriteLine("UN: "+model.Username);
+                //Console.WriteLine("PW: "+model.Password);
 
                 var loginManager = new LoginManager(Globals.LoginManagerRootPath);
                 var authToken = loginManager.GetManagerAuthToken(model.Username, model.Password, createIfFirst: true);
@@ -78,6 +78,16 @@ namespace gView.Server.Controllers
         }
 
         #endregion
+
+
+
+        public IActionResult Collect()
+        {
+            var mem1 = (double)GC.GetTotalMemory(false) / 1024.0 / 1024.0;
+            GC.Collect();
+            var mem2 = (double)GC.GetTotalMemory(true) / 1024.0 / 1024.0;
+            return Json(new { succeeded = true, mem1 = mem1, mem2 = mem2 });
+        }
 
         #region Services
 
@@ -344,7 +354,10 @@ namespace gView.Server.Controllers
                     allTypes = allTypes.ToArray(),
                     accessRules = accessRules,
                     allUsers = loginManager.GetTokenUsernames(),
-                    anonymousUsername = Identity.AnonyomousUsername
+                    anonymousUsername = Identity.AnonyomousUsername,
+
+                    onlineResource = settings.OnlineResource,
+                    outputUrl = settings.OutputUrl
                 });
             });
         }
@@ -420,6 +433,18 @@ namespace gView.Server.Controllers
                                 {
                                     accessRule.RemoveServiceType(serviceType);
                                 }
+                            }
+                        }
+                        else 
+                        {
+                            switch(key)
+                            {
+                                case "advancedsettings_onlineresource":
+                                    settings.OnlineResource = String.IsNullOrWhiteSpace(form[key]) ? null : form[key].ToString();
+                                    break;
+                                case "advancedsettings_outputurl":
+                                    settings.OutputUrl = String.IsNullOrWhiteSpace(form[key]) ? null : form[key].ToString();
+                                    break;
                             }
                         }
                     }

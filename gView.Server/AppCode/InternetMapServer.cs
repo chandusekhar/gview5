@@ -1,6 +1,7 @@
 ﻿using gView.Core.Framework.Exceptions;
 using gView.Framework.Carto;
 using gView.Framework.Data;
+using gView.Framework.Geometry;
 using gView.Framework.IO;
 using gView.Framework.system;
 using gView.Framework.UI;
@@ -36,62 +37,72 @@ namespace gView.Server.AppCode
 
         async static public Task Init(string rootPath, int port = 80)
         {
-            
+
             Globals.AppRootPath = rootPath;
 
-            var mapServerConfig = JsonConvert.DeserializeObject<MapServerConfig>(File.ReadAllText(rootPath + "/_config/mapserver.json"));
-
-            OutputPath = mapServerConfig.OuputPath.ToPlattformPath();
-            OutputUrl = mapServerConfig.OutputUrl;
-            OnlineResource = mapServerConfig.OnlineResourceUrl;
-            TileCachePath = mapServerConfig.TileCacheRoot;
-
-            Globals.ForceHttps = mapServerConfig.ForceHttps.HasValue && mapServerConfig.ForceHttps.Value == false ? false : true;  // default: true
-
-            if (mapServerConfig.TaskQueue != null)
+            try
             {
-                Globals.MaxThreads = Math.Max(1, mapServerConfig.TaskQueue.MaxParallelTasks);
-                Globals.QueueLength = Math.Max(10, mapServerConfig.TaskQueue.MaxQueueLength);
-            }
+                var mapServerConfig = JsonConvert.DeserializeObject<MapServerConfig>(File.ReadAllText(rootPath + "/_config/mapserver.json"));
 
-            Instance = new MapServerInstance(port);
+                Globals.HasValidConfig = true;
 
-            ServicesPath = mapServerConfig.ServiceFolder + "/services";
-            Globals.LoginManagerRootPath = mapServerConfig.ServiceFolder + "/_login";
-            Globals.LoggingRootPath = mapServerConfig.ServiceFolder + "/log";
+                OutputPath = mapServerConfig.OuputPath.ToPlattformPath();
+                OutputUrl = mapServerConfig.OutputUrl;
+                OnlineResource = mapServerConfig.OnlineResourceUrl;
+                TileCachePath = mapServerConfig.TileCacheRoot;
 
-            Globals.AllowFormsLogin = mapServerConfig.AllowFormsLogin == false ? false : true;
+                Globals.ForceHttps = mapServerConfig.ForceHttps.HasValue && mapServerConfig.ForceHttps.Value == false ? false : true;  // default: true
 
-            if(mapServerConfig.ExternalAuthService!=null && mapServerConfig.ExternalAuthService.IsValid)
-            {
-                Globals.ExternalAuthService=mapServerConfig.ExternalAuthService;
-            }
+                if (mapServerConfig.TaskQueue != null)
+                {
+                    Globals.MaxThreads = Math.Max(1, mapServerConfig.TaskQueue.MaxParallelTasks);
+                    Globals.QueueLength = Math.Max(10, mapServerConfig.TaskQueue.MaxQueueLength);
+                }
 
-            foreach (string createDirectroy in new string[] {
+                Instance = new MapServerInstance(port);
+
+                ServicesPath = mapServerConfig.ServiceFolder + "/services";
+                Globals.LoginManagerRootPath = mapServerConfig.ServiceFolder + "/_login";
+                Globals.LoggingRootPath = mapServerConfig.ServiceFolder + "/log";
+
+                Globals.AllowFormsLogin = mapServerConfig.AllowFormsLogin == false ? false : true;
+
+                if (mapServerConfig.ExternalAuthService != null && mapServerConfig.ExternalAuthService.IsValid)
+                {
+                    Globals.ExternalAuthService = mapServerConfig.ExternalAuthService;
+                }
+
+                foreach (string createDirectroy in new string[] {
                 ServicesPath,
                 Globals.LoginManagerRootPath,
                 Globals.LoginManagerRootPath+"/manage",
                 Globals.LoginManagerRootPath+"/token",
                 Globals.LoggingRootPath
             })
-            {
-                if (!new DirectoryInfo(createDirectroy).Exists)
                 {
-                    new DirectoryInfo(createDirectroy).Create();
+                    if (!new DirectoryInfo(createDirectroy).Exists)
+                    {
+                        new DirectoryInfo(createDirectroy).Create();
+                    }
                 }
+
+                await AddServices(String.Empty);
+
+
+                var pluginMananger = new PlugInManager();
+                foreach (Type interpreterType in pluginMananger.GetPlugins(typeof(IServiceRequestInterpreter)))
+                {
+                    Interpreters.Add(interpreterType);
+                }
+
+                //ThreadQueue = new ThreadQueue<IServiceRequestContext>(Globals.MaxThreads, Globals.QueueLength);
+                TaskQueue = new TaskQueue<IServiceRequestContext>(Globals.MaxThreads, Globals.QueueLength);
             }
-
-            await AddServices(String.Empty);
-
-
-            var pluginMananger = new PlugInManager();
-            foreach (Type interpreterType in pluginMananger.GetPlugins(typeof(IServiceRequestInterpreter)))
+            catch (Exception ex)
             {
-                Interpreters.Add(interpreterType);
+                Globals.HasValidConfig = false;
+                Globals.ConfigErrorMessage = ex.Message;
             }
-
-            //ThreadQueue = new ThreadQueue<IServiceRequestContext>(Globals.MaxThreads, Globals.QueueLength);
-            TaskQueue = new TaskQueue<IServiceRequestContext>(Globals.MaxThreads, Globals.QueueLength);
         }
 
         async private static Task AddServices(string folder)
@@ -397,7 +408,7 @@ namespace gView.Server.AppCode
             }
             catch (Exception ex)
             {
-                await Logger.LogAsync(mapName, loggingMethod.error, "LoadConfig: " + ex.Message);
+                await Logger.LogAsync(mapName, loggingMethod.error, "RemoveConfig: " + ex.Message);
                 return false;
             }
         }
@@ -508,7 +519,7 @@ namespace gView.Server.AppCode
 
             using (StringReader sr = new StringReader(mapXml))
             {
-                if (!xmlStream.ReadStream(sr))
+                if (!xmlStream.ReadStream(sr, String.Empty))  // invariant culture
                 {
                     throw new MapServerException("Unable to read MapXML");
                 }
@@ -528,32 +539,52 @@ namespace gView.Server.AppCode
             map.Name = mapName;
 
             StringBuilder errors = new StringBuilder();
+            bool hasErrors = false;
+
             foreach (var dataset in map.Datasets)
             {
                 if (!String.IsNullOrWhiteSpace(dataset.LastErrorMessage))
                 {
                     errors.Append("Dataset " + dataset.GetType().ToString() + Environment.NewLine);
                     errors.Append(dataset.LastErrorMessage + Environment.NewLine + Environment.NewLine);
+                    hasErrors = true;
                 }
             }
 
             if (map.HasErrorMessages)
             {
-                errors.Append("Map Errors:" + Environment.NewLine);
+                //errors.Append("Map Errors/Warnings:" + Environment.NewLine);
                 foreach (var errorMessage in map.ErrorMessages)
                 {
                     errors.Append(errorMessage + Environment.NewLine);
+                    hasErrors |= errorMessage.ToLower().StartsWith("warning:") == false;  // Warnings should not throw an exception
                 }
             }
             if (map.LastException != null)
             {
                 errors.Append("Map Exception:" + Environment.NewLine);
                 errors.Append(map.LastException.Message?.ToString());
+                hasErrors = true;
             }
 
-            if (errors.Length > 0)
+            foreach (IFeatureLayer featureLayer in map.MapElements.Where(e => e is IFeatureLayer))
             {
-                throw new MapServerException(errors.ToString());
+                if (featureLayer.Class is IFeatureClass && ((IFeatureClass)featureLayer.Class).SpatialReference == null)
+                {
+                    if (map.LayerDefaultSpatialReference != null)
+                    {
+                        errors.Append($"Warning: { featureLayer.Title } has no spatial reference. Map default '{ map.LayerDefaultSpatialReference.EpsgCode }' will used for this layer."+ Environment.NewLine);
+                    }
+                    else
+                    {
+                        errors.Append($"Error: { featureLayer.Title } has no spatial reference. Fix this or at least set a default spatial reference for this map in the carto app" + Environment.NewLine);
+                    }
+                }
+            }
+
+            if (hasErrors)
+            {
+                throw new MapServerException("Errors: " + Environment.NewLine + errors.ToString());
             }
 
             XmlStream pluginStream = new XmlStream("Moduls");
@@ -578,7 +609,14 @@ namespace gView.Server.AppCode
 
             await InternetMapServer.SaveConfig(mapDocument);
 
-            return await ReloadMap(mapName);
+            var result = await ReloadMap(mapName);
+
+            if(errors.Length > 0)  // Warnings
+            {
+                throw new MapServerException("Warnings: " + Environment.NewLine + errors.ToString());
+            }
+
+            return result;
         }
 
         async static public Task<bool> RemoveMap(string mapName, string usr, string pwd)
@@ -837,6 +875,11 @@ namespace gView.Server.AppCode
             if (folderService == null)
             {
                 throw new MapServerException("Unknown folder: " + folder);
+            }
+
+            if (identity != null && identity.IsAdministrator)
+            {
+                return;
             }
 
             if (!await folderService.HasPublishAccess(identity))

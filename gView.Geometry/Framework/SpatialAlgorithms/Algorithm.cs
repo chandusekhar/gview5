@@ -1718,9 +1718,89 @@ namespace gView.Framework.SpatialAlgorithms
         }
 
 
+        static public IGeometry InterpolatePoints(IGeometry geometry, int stepPoints, bool onlyValidResult = false)
+        {
+            if (geometry is IPolyline)
+            {
+                var polyline = (IPolyline)geometry;
+
+                Polyline result = new Polyline();
+                for (int i = 0; i < polyline.PathCount; i++)
+                {
+                    var path = new Path(InterpolatePoints(polyline[i], stepPoints));
+                    if (onlyValidResult == false || path.Length > 0)
+                    {
+                        result.AddPath(path);
+                    }
+                }
+                if (onlyValidResult == true && result.PathCount == 0)
+                {
+                    return null;
+                }
+
+                return result;
+            }
+            if (geometry is IPolygon)
+            {
+                var polygon = (IPolygon)geometry;
+
+                Polygon result = new Polygon();
+                for (int i = 0; i < polygon.RingCount; i++)
+                {
+                    var ring = new Ring(InterpolatePoints(polygon[i], stepPoints));
+                    if (onlyValidResult == false || ring.Area > 0)
+                    {
+                        result.AddRing(ring);
+                    }
+                }
+
+                if (onlyValidResult == true && result.RingCount == 0)
+                {
+                    return null;
+                }
+
+                return result;
+            }
+
+            return geometry;
+        }
+        static public IPointCollection InterpolatePoints(IPointCollection pColl, int stepPoints)
+        {
+            if(pColl==null || pColl.PointCount==1)
+            {
+                return pColl;
+            }
+
+            PointCollection result = new PointCollection();
+
+            for (int i = 1, to = pColl.PointCount - 1; i < to; i++)
+            {
+                IPoint p1 = pColl[i];
+                IPoint p2 = pColl[i + 1];
+
+                result.AddPoint(p1);
+
+                var dist = p1.Distance2D(p2);
+                if(dist>0)
+                {
+                    double dx = (p2.X - p1.X) / (stepPoints + 1), dy = (p2.Y - p1.Y) / (stepPoints + 1);
+
+                    for(int s=0;s<stepPoints;s++)
+                    {
+                        result.AddPoint(new Point(p1.X + dx * s, p1.Y + dy * s));
+                    }
+                }
+
+                result.AddPoint(p2);
+            }
+
+            return result;
+        }
+
 
         static public IPolygon SnapOutsidePointsToEnvelope(IPolygon polygon, IEnvelope envelope)
         {
+            // This Algormith is bullship -> try a liam bransky to solve this problem
             if (polygon == null)
             {
                 return null;
@@ -2801,13 +2881,13 @@ namespace gView.Framework.SpatialAlgorithms
 
             return null;
         }
-        public static PointCollection PathPoints(IPath path, double fromStat, double toStat, double step)
+        public static PointCollection PathPoints(IPath path, double fromStat, double toStat, double step, bool createPointM2 = false)
         {
             PointCollection pColl = new PointCollection();
 
             for (double s = fromStat; s <= toStat; s += step)
             {
-                IPoint p = PathPoint(path, s);
+                IPoint p = PathPoint(path, s, createPointM2);
                 if (p != null)
                 {
                     pColl.AddPoint(p);
@@ -2817,9 +2897,9 @@ namespace gView.Framework.SpatialAlgorithms
             return pColl;
         }
 
-        private static Point PathPoint(IPath path, double Station)
+        private static Point PathPoint(IPath path, double station, bool createPointM2 = false)
         {
-            if (Station < 0.0)
+            if (station < 0.0)
             {
                 return null;
             }
@@ -2835,11 +2915,21 @@ namespace gView.Framework.SpatialAlgorithms
 
                 double stat0 = stat;
                 stat += Math.Sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-                if (stat >= Station)
+                if (stat >= station)
                 {
-                    double t = Station - stat0;
+                    double t = station - stat0;
                     double l = Math.Sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
                     double dx = (x2 - x1) / l, dy = (y2 - y1) / l;
+
+                    if (createPointM2 == true)
+                    {
+                        //
+                        // -dy!! => this value is used for DisplyRotation (eg SymbolDotedLineSymbol)
+                        // geographic Y and Display Y has different Directions!!
+                        //
+                        return new PointM2(x1 + dx * t, y1 + dy * t, stat0 + t, Math.Atan2(-dy, dx));
+                    }
+
                     return new Point(x1 + dx * t, y1 + dy * t);
                 }
                 x1 = x2; y1 = y2;

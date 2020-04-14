@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 
 namespace gView.Server
 {
@@ -33,11 +34,11 @@ namespace gView.Server
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
-            services.AddMvc(o=>
+            services.AddMvc(o =>
                 {
                     o.EnableEndpointRouting = false;
                 })
-                .AddNewtonsoftJson();
+                .AddNewtonsoftJson(opt => opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
 
             //services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
@@ -58,6 +59,11 @@ namespace gView.Server
                 //app.ConfigureCustomExceptionMiddleware();
                 app.UseHsts();
             }
+
+            app.UseCors(x => x
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader());
 
             //app.UseHttpsRedirection();
             app.UseStaticFiles();
@@ -248,6 +254,11 @@ namespace gView.Server
                     template: "catalog",
                     defaults: new { controller = "MapServer", Action = "Catalog" }
                 );
+                routes.MapRoute(
+                    name: "mapserver-maprequest-wmts-comp",
+                    template: "MapRequest/wmts/{id}",
+                    defaults: new { controller = "Ogc", Action = "OgcRequest" }
+                    );
                 routes.MapRoute(
                     name: "mapserver-maprequest",
                     template: "MapRequest/{guid}/{folder}/{name}",

@@ -94,7 +94,7 @@ namespace gView.Framework.Symbology
     }
 
     public enum TextSymbolAlignment { rightAlignOver, Over, leftAlignOver, rightAlignCenter, Center, leftAlignCenter, rightAlignUnder, Under, leftAlignUnder }
-
+    
     public class AnnotationPolygonEnvelope
     {
         private float _minx, _miny, _maxx, _maxy;
@@ -413,9 +413,11 @@ namespace gView.Framework.Symbology
         string Text { get; set; }
         TextSymbolAlignment TextSymbolAlignment { get; set; }
 
+        TextSymbolAlignment[] SecondaryTextSymbolAlignments { get; set; }
+
         IDisplayCharacterRanges MeasureCharacterWidth(IDisplay display);
 
-        List<IAnnotationPolygonCollision> AnnotationPolygon(IDisplay display, IGeometry geometry);
+        List<IAnnotationPolygonCollision> AnnotationPolygon(IDisplay display, IGeometry geometry, TextSymbolAlignment symbolAlignment);
     }
 
     public interface ITextSymbol : ISymbol, ILabel, ISymbolTransformation, ISymbolRotation
@@ -424,6 +426,8 @@ namespace gView.Framework.Symbology
 
         float MaxFontSize { get; set; }
         float MinFontSize { get; set; }
+
+        void Draw(IDisplay display, IGeometry geometry, TextSymbolAlignment symbolAlignment);
     }
 
     public enum RotationType { geographic, aritmetic }
@@ -608,6 +612,14 @@ namespace gView.Framework.Symbology
         {
         }
     }
+    [global::System.AttributeUsageAttribute(global::System.AttributeTargets.Property)]
+    public class UsePointSymbolPicker : global::System.Attribute
+    {
+        public UsePointSymbolPicker()
+        {
+        }
+    }
+
     [global::System.AttributeUsageAttribute(global::System.AttributeTargets.Property)]
     public class UseCharacterPicker : global::System.Attribute
     {
