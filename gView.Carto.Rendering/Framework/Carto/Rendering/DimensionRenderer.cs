@@ -189,6 +189,8 @@ namespace gView.Framework.Carto.Rendering
             }
         }
 
+        public void StartDrawing(IDisplay display) { }
+
         public void FinishDrawing(IDisplay disp, ICancelTracker cancelTracker)
         {
         }
@@ -232,6 +234,12 @@ namespace gView.Framework.Carto.Rendering
         public string Category
         {
             get { return "Features"; }
+        }
+
+        public bool RequireClone()
+        {
+            return (_textSymbol != null && _textSymbol.RequireClone()) ||
+                   (_lineSymbol != null && _lineSymbol.RequireClone());
         }
 
         #endregion

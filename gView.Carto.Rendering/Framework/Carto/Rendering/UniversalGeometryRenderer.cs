@@ -10,6 +10,7 @@ using gView.Framework.Data;
 using System.Reflection;
 using gView.Framework.Carto.Rendering.UI;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace gView.Framework.Carto.Rendering
 {
@@ -70,6 +71,8 @@ namespace gView.Framework.Carto.Rendering
             _symbol.Draw(feature.Shape, disp);
         }
 
+        public void StartDrawing(IDisplay display) { }
+
         public void FinishDrawing(IDisplay disp, ICancelTracker cancelTracker)
         {
         }
@@ -118,6 +121,11 @@ namespace gView.Framework.Carto.Rendering
         public string Category
         {
             get { return "Features"; }
+        }
+
+        public bool RequireClone()
+        {
+            return _symbol?.Symbols?.Where(s => s != null && s.RequireClone()).FirstOrDefault() != null;
         }
 
         #endregion

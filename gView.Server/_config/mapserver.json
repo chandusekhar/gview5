@@ -19,6 +19,12 @@
     "method": "LoginAs"
   },
 
+  "Logging": {
+    "LogServiceErrors": true,
+    "LogServiceRequests": false,
+    "LogServiceRequestDetails": false
+  },
+
   "allowFormsLogin": true,
   "force-https": false
 }

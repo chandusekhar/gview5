@@ -785,7 +785,7 @@ namespace gView.Framework.Data
         //}
     }
     
-    public class FeatureLayer : Layer, IFeatureLayer
+    public class FeatureLayer : Layer, IFeatureLayer, IFeatureLayerComposition
     {
         protected IFeatureRenderer _renderer = null, _selectionrenderer = null;
         protected ILabelRenderer _labelRenderer = null;
@@ -865,6 +865,12 @@ namespace gView.Framework.Data
 
                 if (layer.Joins != null)
                     this.Joins = (FeatureLayerJoins)layer.Joins.Clone();
+
+                if (layer is IFeatureLayerComposition)
+                {
+                    this.CompositionMode = ((IFeatureLayerComposition)layer).CompositionMode;
+                    this.CompositionModeCopyTransparency = ((IFeatureLayerComposition)layer).CompositionModeCopyTransparency;
+                }
             }
         }
 
@@ -928,6 +934,7 @@ namespace gView.Framework.Data
         }
 
         #region IFeatureLayer Member
+
         public IFeatureRenderer FeatureRenderer
         {
             get { return _renderer; }
@@ -1040,6 +1047,13 @@ namespace gView.Framework.Data
 
         #endregion
 
+        #region IFeatureLayerComposition
+
+        public FeatureLayerCompositionMode CompositionMode { get; set; }
+        public float CompositionModeCopyTransparency { get; set; }
+
+        #endregion
+
         #region IPersistable Member
 
         override public void Load(IPersistStream stream)
@@ -1071,6 +1085,13 @@ namespace gView.Framework.Data
             }
 
             this.Joins = (FeatureLayerJoins)stream.Load("Joins", null, new FeatureLayerJoins());
+
+            if(this is IFeatureLayerComposition)
+            {
+                var flComposition = (IFeatureLayerComposition)this;
+                flComposition.CompositionMode = (FeatureLayerCompositionMode)(int)stream.Load("composition_mode", (int)FeatureLayerCompositionMode.Over);
+                flComposition.CompositionModeCopyTransparency = (float)stream.Load("compostion_copy_transp", 1f);
+            }
         }
 
         override public void Save(IPersistStream stream)
@@ -1110,6 +1131,13 @@ namespace gView.Framework.Data
 
             if (_joins != null)
                 stream.Save("Joins", _joins);
+
+            if (this is IFeatureLayerComposition)
+            {
+                var flComposition = (IFeatureLayerComposition)this;
+                stream.Save("composition_mode", (int)flComposition.CompositionMode);
+                stream.Save("compostion_copy_transp", flComposition.CompositionModeCopyTransparency);
+            }
         }
 
         #endregion

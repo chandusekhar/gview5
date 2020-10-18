@@ -10,6 +10,7 @@ using System.Reflection;
 using gView.Framework.IO;
 using gView.Framework.Carto.Rendering.UI;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace gView.Framework.Carto.Rendering
 {
@@ -157,6 +158,8 @@ namespace gView.Framework.Carto.Rendering
             if (symbol != null) disp.Draw(symbol, feature.Shape);
         }
 
+        public void StartDrawing(IDisplay display) { }
+
         public void FinishDrawing(IDisplay disp, ICancelTracker cancelTracker)
         {
         }
@@ -210,6 +213,14 @@ namespace gView.Framework.Carto.Rendering
         public string Category
         {
             get { return "Categories"; }
+        }
+
+        public bool RequireClone()
+        {
+            if (_defaultSymbol != null && _defaultSymbol.RequireClone())
+                return true;
+
+            return _quantityClasses?.Where(q => q?.Symbol != null && q.Symbol.RequireClone()).FirstOrDefault() != null;
         }
 
         #endregion

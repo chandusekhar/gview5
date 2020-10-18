@@ -9,6 +9,7 @@ using System.Reflection;
 using gView.Framework.Symbology;
 using gView.Framework.Carto.Rendering.UI;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace gView.Framework.Carto.Rendering
 {
@@ -41,6 +42,8 @@ namespace gView.Framework.Carto.Rendering
                 renderer.Draw(disp, feature);
             }
         }
+
+        public void StartDrawing(IDisplay display) { }
 
         public void FinishDrawing(IDisplay disp, ICancelTracker cancelTracker)
         {
@@ -103,6 +106,11 @@ namespace gView.Framework.Carto.Rendering
         public string Category
         {
             get { return "Group"; }
+        }
+
+        public bool RequireClone()
+        {
+            return _renderers?.Where(r=>r!=null && r.RequireClone()).FirstOrDefault() != null;
         }
 
         #endregion
@@ -307,6 +315,8 @@ namespace gView.Framework.Carto.Rendering
                 _renderer.Draw(disp, feature);
             }
 
+            public void StartDrawing(IDisplay display) { }
+
             public void FinishDrawing(IDisplay disp, ICancelTracker cancelTracker)
             {
                 if (_renderer != null)
@@ -367,6 +377,11 @@ namespace gView.Framework.Carto.Rendering
                     if (_renderer == null) return "";
                     return _renderer.Category;
                 }
+            }
+
+            public bool RequireClone()
+            {
+                return _renderer != null && _renderer.RequireClone();
             }
 
             #endregion

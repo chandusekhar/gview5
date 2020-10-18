@@ -426,6 +426,8 @@ namespace gView.Framework.Carto
         //void Draw(IDisplay disp,IFeatureCursor fCursor,DrawPhase drawPhase,ICancelTracker cancelTracker);
         void Draw(IDisplay disp, IFeature feature);
 
+        void StartDrawing(IDisplay display);
+
         void FinishDrawing(IDisplay disp, ICancelTracker cancelTracker);
 
         /// <summary>
@@ -457,6 +459,8 @@ namespace gView.Framework.Carto
         /// The category for the renderer.
         /// </summary>
         string Category { get; }
+
+        bool RequireClone();
     }
     public interface IFeatureRenderer2 : IFeatureRenderer
     {
